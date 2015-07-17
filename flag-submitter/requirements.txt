@@ -1,0 +1,4 @@
+sqlalchemy
+twisted
+MySQL-python
+Flask
