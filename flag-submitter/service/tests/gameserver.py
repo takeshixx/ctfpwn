@@ -1,8 +1,8 @@
 #!/usr/bin/env python2
+"""A simple gameserver that returns random states for submitted flags."""
 import socket
 from random import choice
 from thread import *
-#states = ['expired','no such flag','accepted','corresponding service down']
 states = ['expired','no such flag','accepted', 'corresponding', 'own flag']
 
 
