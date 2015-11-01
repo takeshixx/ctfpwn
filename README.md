@@ -9,20 +9,13 @@ A simple offensive framework for attack/defense CTFs. It takes care of running e
 ## flag-submitter
 
 ### service
-Listening on a TCP socket, takes flags and stores them in a (MariaDB/MySQL) database. Submits new flags and retrys if the gameserver is down. Takes one or more flags in the following format:
+Listening on a TCP socket, takes flags and stores them in a (MongoDB) database. Submits new flags and retrys if the gameserver is down. Takes one or more flags in the following format:
 
 ```    
-SERVICE|TARGET|FLAG
+SERVICE|TARGET|FLAG|TIMESTAMP
 ```
 
-The flag-submitter service runs on TCP port ```8000```
-
-### frontend
-Tiny Flask application which provides a JSON based REST API via HTTP. It just reads some stats from the database and returns them in a JSON object. Currently only the base path returns some data. Someone should write some fancy statistic function. The frontend listens on TCP port ```8001```.
-
-Get (nearly) live simple stats:
-    
-**watch -n1 curl -s http://localhost:8001/**
+The flag-submitter service runs on TCP port ```8081```
 
 ### Deyploment
 First, run **init.sh** to initialize the setup and do some dependency checking.
@@ -34,7 +27,7 @@ virtualenv env
 env/bin/pip install -r requirements.txt
 ```
 
-Run service and frontend:
+Run the service:
     
 ```
 env/bin/python run-service.py
@@ -42,14 +35,13 @@ env/bin/python run-service.py
 
 Note: The service should run in a separate shell because it prints ANSI color output to STDOUT. ```aterm``` proofed to handle massive STDOUT output pretty good.
 
-```
-env/bin/python run-frontend.py
-```
-
 ## exploit
 The **parallel.sh** script is a simple wrapper for GNU parallel. It runs simple exploit scripts in parallel.
     
-**./parallel.sh targets.txt exploit.py**
+**./parallel.sh targets.txt exploit.py service**
 
 * **targets.txt**: Should be a file with IP addresses, one per line.
 * **exploit.py**: An exploit script which takes one argument, an IP address, and outputs one or more flag/s in flag-submitter-friendly output. Can be any kind of executable (binaries, shell/python/ruby/perl/etc scripts).
+* **service**: The name of the corresponding service.
+
+**Note**: Implement this in a more reliable way that priotizes targets.
