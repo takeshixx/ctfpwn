@@ -1,4 +1,2 @@
-sqlalchemy
-twisted
-MySQL-python
-Flask
+Twisted
+txmongo

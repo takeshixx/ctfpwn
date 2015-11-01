@@ -3,24 +3,19 @@
 readonly KERNEL=$(uname -s)
 
 if [ "$KERNEL" = "Linux" ];then
-    if [ -z "$(netstat -tulpn|grep 3306)" ];then
-        echo "MySQL is not running on port 3306"
+    if [ -z "$(netstat -tulpn|grep 27017)" ];then
+        echo "MongoDB is not running on port 27017"
         exit 1
     fi
 elif [ "$KERNEL" = "FreeBSD" ];then
-    if [ -z "$(sockstat -4|grep 3306)" ];then
-        echo "MySQL is not running on port 3306"
+    if [ -z "$(sockstat -4|grep 27017)" ];then
+        echo "MongoDB is not running on port 27017"
         exit 1
     fi
 fi
 
-if [ -z "$(which virutalenv)" ];then
+if [ -z "$(which virutalenv2)" ];the
     echo "virtualenv not found"
-    exit 1
-fi
-
-if [ -z "$(which mysql)" ];then
-    echo "mysql client not found"
     exit 1
 fi
 
