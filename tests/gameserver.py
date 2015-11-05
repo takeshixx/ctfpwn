@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 """A simple gameserver that returns random states for submitted flags."""
+import sys
 import socket
 from random import choice
 from thread import *
@@ -11,11 +12,11 @@ def clientthread(conn):
     while True:
         try:
             data = conn.recv(1024)
-            print data
+            print(data.strip())
             resp = choice(states)
             conn.send(resp+'\n')
         except Exception as e:
-            print str(e)
+            print(str(e))
             conn.close()
             return
 
@@ -27,7 +28,8 @@ while True:
         while True:
             conn, addr = sock.accept()
             start_new_thread(clientthread,(conn,))
-        conn.close()
+    except KeyboardInterrupt:
         sock.close()
+        sys.exit(0)
     except Exception as e:
-        print str(e)
+        print(str(e))

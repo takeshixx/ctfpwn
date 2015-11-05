@@ -1,5 +1,9 @@
 """This module is responsible for listening on a TCP port to receive flags
-that will be inserted into the database."""
+that will be inserted into the database.
+
+This may be obsolete because the exploit supervisor pushes flags directly
+to the database. However, it could still run for testing purposes during
+exploit development."""
 import re
 from twisted.python import log
 from twisted.internet import protocol

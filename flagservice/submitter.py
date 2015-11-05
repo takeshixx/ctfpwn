@@ -31,16 +31,16 @@ class FlagSubmissionProtocol(protocol.Protocol):
     def dataReceived(self, incoming):
 
         if GAME_SERVER_MSG_SUCCESS in incoming:
-            print('Flag accepted')
+            #print('Flag accepted')
             self.flags_success.append(self.current_flag)
         elif GAME_SERVER_MSG_SERVICE_DOWN in incoming:
-            print('Service is not available')
+            #print('Service is not available')
             self.flags_pending.append(self.current_flag)
         elif GAME_SERVER_MSG_EXPIRED in incoming:
-            print('Flag expired')
+            #print('Flag expired')
             self.flags_expired.append(self.current_flag)
         elif GAME_SERVER_MSG_INVALID in incoming:
-            print('Invalid flag')
+            #print('Invalid flag')
             self.flags_failed.append(self.current_flag)
         elif GAME_SERVER_MSG_OWN_FLAG in incoming:
             self.flags_failed.append(self.current_flag)
@@ -105,7 +105,8 @@ class FlagSubmissionFactory(protocol.Factory):
         return FlagSubmissionProtocol(self.flags, self.db)
 
     def clientConnectionLost(self, connector, reason):
-        print('Connection lost: {}'.format(reason))
+        #print('Connection lost: {}'.format(reason))
+        pass
 
     def clientConnectionFailed(self, connector, reason):
         print('Connection to gameserver failed: {}'.format(reason))
