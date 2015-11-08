@@ -2,21 +2,24 @@
 """A simple gameserver that returns random states for submitted flags."""
 import sys
 import socket
+import re
 from random import choice
 from thread import *
 states = ['expired','no such flag','accepted', 'corresponding', 'own flag']
+flag_grep = re.compile(r"(\w{31}=)")
 
-
-def clientthread(conn):
+def clientthread(conn, addr):
     conn.send('Welcome to the gameserver and stuff\n')
+    print('New connection from {}'.format(addr[0]))
+    flags = []
     while True:
         try:
             data = conn.recv(1024)
-            print(data.strip())
+            flags += flag_grep.findall(data)
             resp = choice(states)
             conn.send(resp+'\n')
         except Exception as e:
-            print(str(e))
+            print('Received {} flags'.format(len(flags)))
             conn.close()
             return
 
@@ -27,7 +30,7 @@ while True:
         sock.listen(10)
         while True:
             conn, addr = sock.accept()
-            start_new_thread(clientthread,(conn,))
+            start_new_thread(clientthread,(conn, addr))
     except KeyboardInterrupt:
         sock.close()
         sys.exit(0)

@@ -9,6 +9,7 @@ from twisted.python import log
 from twisted.internet import protocol
 
 from .shared import flag_db
+from .tinylogs import log
 from .flagdb import Flag
 
 # Flag regex
@@ -46,5 +47,6 @@ class FlagReceiverProtocol(protocol.Protocol):
                     flag_db.insert_new(flag)
                 else:
                     self.transport.write('bogus format!\n')
+                    log.debug('False submission by {}'.format(self.transport.getPeer))
         except Exception as e:
-            log.msg('Error in dataReceive() function! [EXCEPTION: {}]'.format(e))
+            log.warning('Error in dataReceive() function! [EXCEPTION: {}]'.format(e))

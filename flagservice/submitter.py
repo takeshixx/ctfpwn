@@ -1,6 +1,10 @@
 """This module includes everything that is needed to submit flags to
 the gameserver."""
+import time
+import datetime
 from twisted.internet import protocol
+
+from .tinylogs import log
 
 # Messages by the gameserver, need to be adjusted
 GAME_SERVER_MSG_SUCCESS = 'accepted'
@@ -26,39 +30,48 @@ class FlagSubmissionProtocol(protocol.Protocol):
 
     def connectionMade(self):
         """Read unnecessary banners and stuff."""
-        print('Connected to gameserver')
+        log.debug('[GAMESERVER] Connected')
 
     def dataReceived(self, incoming):
 
         if GAME_SERVER_MSG_SUCCESS in incoming:
-            #print('Flag accepted')
-            self.flags_success.append(self.current_flag)
+            log.score('\033[1;1m[\033[0m\033[96m{}\033[0m\033[1;1m]\033[0m [\033[1;1mFLAG\033[0m {}] [\033[1;1mTARGET\033[0m {}] [\033[1;1mCAPTURED\033[0m {}]'.format(
+                self.current_flag.get('service'),
+                self.current_flag.get('flag'),
+                self.current_flag.get('target'),
+                datetime.datetime.fromtimestamp(self.current_flag.get('timestamp')).strftime('%H:%M:%S')
+            ))
+            self.flags_success.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_SERVICE_DOWN in incoming:
-            #print('Service is not available')
-            self.flags_pending.append(self.current_flag)
+            log.warning('\033[1;1m[\033[0m\033[96m{}\033[0m\033[1;1m]\033[0m [\033[93mSERVICE NOT AVAILABLE\033[0m]'.format(
+                self.current_flag.get('service')
+            ))
+            self.flags_pending.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_EXPIRED in incoming:
-            #print('Flag expired')
-            self.flags_expired.append(self.current_flag)
+            #log.debug('Flag expired')
+            self.flags_expired.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_INVALID in incoming:
-            #print('Invalid flag')
-            self.flags_failed.append(self.current_flag)
+            #log.debug('Invalid flag')
+            self.flags_failed.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_OWN_FLAG in incoming:
-            self.flags_failed.append(self.current_flag)
+            #log.debug('Own flag')
+            self.flags_failed.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_TOO_MUCH in incoming:
             """TODO: The gameserver may complains about too much connections from our team.
             This message has to be adjusted. Abort the current session and retry the current
             flags in the next iteration."""
+            log.warning('Too much connections to the gameserver!')
             self.transport.loseConnection()
             return
         else:
-            print('Unknown gameserver message: {}'.format(incoming))
+            log.warning('Unknown gameserver message: {}'.format(incoming))
 
         if not len(self.flags):
             self.transport.loseConnection()
             return
 
         self.current_flag = self.flags.pop(0)
-        self._write_line(self.current_flag)
+        self._write_line(self.current_flag.get('flag'))
 
     def connectionLost(self, reason):
         self._update_flag_states()
@@ -67,6 +80,7 @@ class FlagSubmissionProtocol(protocol.Protocol):
         self.transport.write('{}\n'.format(line))
 
     def _update_flag_states(self):
+        t0 = time.clock()
 
         if self.flags_success:
             for flag in self.flags_success:
@@ -90,6 +104,14 @@ class FlagSubmissionProtocol(protocol.Protocol):
             for flag in self.flags:
                 self.db.update_pending(flag)
 
+        log.stats('[\033[93mSUBMIT\033[0m] [\033[32mACCEPTED\033[0m \033[1;1m{}\033[0m] [\033[93mPENDING\033[0m \033[1;1m{}\033[0m] [\033[31mEXPIRED\033[0m \033[1;1m{}\033[0m] [\033[93mUNKNOWN\033[0m \033[1;1m{}\033[0m]'.format(
+            len(self.flags_success),
+            len(self.flags_pending+self.flags),
+            len(self.flags_expired),
+            len(self.flags_failed)
+        ))
+        log.stats('[GAMESERVER] _update_flag_states() took {}'.format(time.clock()-t0))
+
 
 class FlagSubmissionFactory(protocol.Factory):
     protocol = FlagSubmissionProtocol
@@ -105,8 +127,7 @@ class FlagSubmissionFactory(protocol.Factory):
         return FlagSubmissionProtocol(self.flags, self.db)
 
     def clientConnectionLost(self, connector, reason):
-        #print('Connection lost: {}'.format(reason))
         pass
 
     def clientConnectionFailed(self, connector, reason):
-        print('Connection to gameserver failed: {}'.format(reason))
+        log.warning('Connection to gameserver failed: {}'.format(reason))
