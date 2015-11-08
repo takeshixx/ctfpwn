@@ -30,7 +30,7 @@ class FlagSubmissionProtocol(protocol.Protocol):
 
     def connectionMade(self):
         """Read unnecessary banners and stuff."""
-        log.debug('[GAMESERVER] Connected')
+        log.debug('[\033[1;35mGAMESERVER\033[0m] [CONNECTED]')
 
     def dataReceived(self, incoming):
 
@@ -110,7 +110,7 @@ class FlagSubmissionProtocol(protocol.Protocol):
             len(self.flags_expired),
             len(self.flags_failed)
         ))
-        log.stats('[GAMESERVER] _update_flag_states() took {}'.format(time.clock()-t0))
+        log.stats('[\033[1;35mGAMESERVER\033[0m] _update_flag_states() took {}'.format(time.clock()-t0))
 
 
 class FlagSubmissionFactory(protocol.Factory):
@@ -127,7 +127,7 @@ class FlagSubmissionFactory(protocol.Factory):
         return FlagSubmissionProtocol(self.flags, self.db)
 
     def clientConnectionLost(self, connector, reason):
-        pass
+        log.error('[\033[1;35mGAMESERVER\033[0m] [\033[1;31mCONNECTION LOST\033[0m] [REASON {}]'.format(reason.getErrorMessage()))
 
     def clientConnectionFailed(self, connector, reason):
-        log.warning('Connection to gameserver failed: {}'.format(reason))
+        log.error('[\033[1;35mGAMESERVER\033[0m] [\033[1;31mCONNECTION FAILED\033[0m] [REASON {}]'.format(reason.getErrorMessage()))

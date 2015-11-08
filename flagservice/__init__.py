@@ -37,10 +37,10 @@ def submit_flags():
         flags = yield flag_db.select_new_and_pending()
 
         if flags:
-            log.info('[SUBMIT] [COUNT {}]'.format(len(flags)))
+            log.info('[\033[1;35mSUBMIT\033[0m] [COUNT {}]'.format(len(flags)))
             reactor.connectTCP(GAMESERVER_ADDR, GAMESERVER_PORT, FlagSubmissionFactory(flags, flag_db))
         else:
-            log.info('[SUBMIT] No NEW/PENDING flags for submission...')
+            log.info('[\033[1;35mSUBMIT\033[0m] No NEW/PENDING flags for submission...')
     except Exception as e:
         log.warning(e)
 
@@ -50,7 +50,7 @@ def print_flag_stats():
     """Database statistics that will be printed every SERVICE_STATS_INTERVAL seconds."""
     try:
         stats = yield flag_db.stats()
-        log.stats('[\033[93mFLAGS\033[0m] [\033[93mTOTAL\033[0m \033[1;1m{}\033[0m] [\033[93mSUBMITTED\033[0m \033[1;1m{}\033[0m] [\033[93mEXPIRED\033[0m \033[1;1m{}\033[0m] [\033[93mFAILED\033[0m \033[1;1m{}\033[0m] [\033[93mNEW\033[0m \033[1;1m{}\033[0m] [\033[93mPENDING\033[0m \033[1;1m{}\033[0m]'.format(
+        log.stats('[\033[1;35mFLAGS\033[0m] [\033[93mTOTAL\033[0m \033[1;1m{}\033[0m] [\033[93mSUBMITTED\033[0m \033[1;1m{}\033[0m] [\033[93mEXPIRED\033[0m \033[1;1m{}\033[0m] [\033[93mFAILED\033[0m \033[1;1m{}\033[0m] [\033[93mNEW\033[0m \033[1;1m{}\033[0m] [\033[93mPENDING\033[0m \033[1;1m{}\033[0m]'.format(
             stats.get('totalFlags'),
             stats.get('submittedCount'),
             stats.get('expiredCount'),

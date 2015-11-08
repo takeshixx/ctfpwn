@@ -12,6 +12,10 @@ class TinyLogs:
         self.c_delimiter = '\033[1;1m'
         self.DEBUG = debug
 
+        self.warn = self.warning
+        self.err = self.error
+        self.msg = self.info
+
     def timestamp(self):
         return time.strftime('%H:%M:%S')
 
@@ -21,7 +25,7 @@ class TinyLogs:
         )
 
     def error(self,msg):
-        print('{D}[{E}{C}WARNING{E}{D}]{E} {D}[{E}{C}{T}{E}{D}]{E} {S}'.format(
+        print('{D}[{E}{C}ERROR{E}{D}]{E} {D}[{E}{C}{T}{E}{D}]{E} {S}'.format(
                 E=self.c_escape,D=self.c_delimiter,C=self.c_error,T=self.timestamp(),S=str(msg))
         )
 
