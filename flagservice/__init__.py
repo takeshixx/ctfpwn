@@ -77,8 +77,8 @@ def run_flagservice():
         factory.protocol = FlagReceiverProtocol
         reactor.listenTCP(SERVICE_PORT,factory,interface=SERVICE_ADDR)
 
-        aliver = LoopingCall(alive)
-        aliver.start(2)
+        #aliver = LoopingCall(alive)
+        #aliver.start(2)
 
         # Print stats every SERVICE_STATS_INTERVAL seconds.
         stats = LoopingCall(print_flag_stats)

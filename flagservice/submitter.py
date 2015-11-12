@@ -127,7 +127,7 @@ class FlagSubmissionFactory(protocol.Factory):
         return FlagSubmissionProtocol(self.flags, self.db)
 
     def clientConnectionLost(self, connector, reason):
-        log.error('[\033[1;35mGAMESERVER\033[0m] [\033[1;31mCONNECTION LOST\033[0m] [REASON {}]'.format(reason.getErrorMessage()))
+        log.info('[\033[1;35mGAMESERVER\033[0m] [\033[1;31mCONNECTION LOST\033[0m] [REASON {}]'.format(reason.getErrorMessage()))
 
     def clientConnectionFailed(self, connector, reason):
         log.error('[\033[1;35mGAMESERVER\033[0m] [\033[1;31mCONNECTION FAILED\033[0m] [REASON {}]'.format(reason.getErrorMessage()))
