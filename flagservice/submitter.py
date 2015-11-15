@@ -3,6 +3,7 @@ the gameserver."""
 import time
 import datetime
 from twisted.internet import protocol
+from twisted.protocols import policies
 
 from .tinylogs import log
 
@@ -14,7 +15,7 @@ GAME_SERVER_MSG_INVALID = 'no such flag'
 GAME_SERVER_MSG_OWN_FLAG = 'own flag'
 GAME_SERVER_MSG_TOO_MUCH = 'too much'
 
-class FlagSubmissionProtocol(protocol.Protocol):
+class FlagSubmissionProtocol(protocol.Protocol, policies.TimeoutMixin):
     """
     An interface to the gameserver for submitting flags.
     Every instance may submit one or more flags at once.
@@ -30,20 +31,25 @@ class FlagSubmissionProtocol(protocol.Protocol):
 
     def connectionMade(self):
         """Read unnecessary banners and stuff."""
-        log.debug('[\033[1;35mGAMESERVER\033[0m] [CONNECTED]')
+        log.debug('[GAMESERVER] [CONNECTED]')
+        self.setTimeout(5)
+
+    def timeoutConnection(self):
+        self.transport.abortConnection()
 
     def dataReceived(self, incoming):
+        self.resetTimeout()
 
         if GAME_SERVER_MSG_SUCCESS in incoming:
-            log.score('\033[1;1m[\033[0m\033[96m{}\033[0m\033[1;1m]\033[0m [\033[1;1mFLAG\033[0m {}] [\033[1;1mTARGET\033[0m {}] [\033[1;1mCAPTURED\033[0m {}]'.format(
-                self.current_flag.get('service'),
-                self.current_flag.get('flag'),
-                self.current_flag.get('target'),
-                datetime.datetime.fromtimestamp(self.current_flag.get('timestamp')).strftime('%H:%M:%S')
-            ))
+            # log.score('[{}] [FLAG {}] [TARGET {}] [CAPTURED {}]'.format(
+            #     self.current_flag.get('service'),
+            #     self.current_flag.get('flag'),
+            #     self.current_flag.get('target'),
+            #     datetime.datetime.fromtimestamp(self.current_flag.get('timestamp')).strftime('%H:%M:%S')
+            # ))
             self.flags_success.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_SERVICE_DOWN in incoming:
-            log.warning('\033[1;1m[\033[0m\033[96m{}\033[0m\033[1;1m]\033[0m [\033[93mSERVICE NOT AVAILABLE\033[0m]'.format(
+            log.error('[{}] [SERVICE NOT AVAILABLE]'.format(
                 self.current_flag.get('service')
             ))
             self.flags_pending.append(self.current_flag.get('flag'))
@@ -77,10 +83,11 @@ class FlagSubmissionProtocol(protocol.Protocol):
         self._update_flag_states()
 
     def _write_line(self, line):
+        self.resetTimeout()
         self.transport.write('{}\n'.format(line))
 
     def _update_flag_states(self):
-        t0 = time.clock()
+        t0 = time.time()
 
         if self.flags_success:
             for flag in self.flags_success:
@@ -104,13 +111,13 @@ class FlagSubmissionProtocol(protocol.Protocol):
             for flag in self.flags:
                 self.db.update_pending(flag)
 
-        log.stats('[\033[93mSUBMIT\033[0m] [\033[32mACCEPTED\033[0m \033[1;1m{}\033[0m] [\033[93mPENDING\033[0m \033[1;1m{}\033[0m] [\033[31mEXPIRED\033[0m \033[1;1m{}\033[0m] [\033[93mUNKNOWN\033[0m \033[1;1m{}\033[0m]'.format(
+        log.stats('[SUBMIT] [ACCEPTED {}] [PENDING {}] [EXPIRED {}] [UNKNOWN {}]'.format(
             len(self.flags_success),
             len(self.flags_pending+self.flags),
             len(self.flags_expired),
             len(self.flags_failed)
         ))
-        log.stats('[\033[1;35mGAMESERVER\033[0m] _update_flag_states() took {}'.format(time.clock()-t0))
+        log.stats('[GAMESERVER] _update_flag_states() took {}'.format(time.time()-t0))
 
 
 class FlagSubmissionFactory(protocol.Factory):
@@ -127,7 +134,8 @@ class FlagSubmissionFactory(protocol.Factory):
         return FlagSubmissionProtocol(self.flags, self.db)
 
     def clientConnectionLost(self, connector, reason):
-        log.info('[\033[1;35mGAMESERVER\033[0m] [\033[1;31mCONNECTION LOST\033[0m] [REASON {}]'.format(reason.getErrorMessage()))
+        log.info('[GAMESERVER] [CONNECTION LOST] [REASON {}]'.format(reason.getErrorMessage()))
+
 
     def clientConnectionFailed(self, connector, reason):
-        log.error('[\033[1;35mGAMESERVER\033[0m] [\033[1;31mCONNECTION FAILED\033[0m] [REASON {}]'.format(reason.getErrorMessage()))
+        log.error('[GAMESERVER] [CONNECTION FAILED] [REASON {}]'.format(reason.getErrorMessage()))

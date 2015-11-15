@@ -30,8 +30,15 @@ class FlagDB():
             self.db = self.mongo.flagservice
             self.col = self.db.flags
             self.col_services = self.db.services
+            self.setup_database_indexes()
         except Exception as e:
             log.error('Error in FlagDB().__init__() [EXCEPTION {}]'.format(e))
+
+    @defer.inlineCallbacks
+    def setup_database_indexes(self):
+        """Speed up find queries by creating indexes."""
+        yield self.col.create_index(txmongo.filter.sort(txmongo.filter.ASCENDING('flag')))
+        yield self.col.create_index(txmongo.filter.sort(txmongo.filter.ASCENDING('state')))
 
     @defer.inlineCallbacks
     def insert_new(self, flag):
@@ -53,7 +60,7 @@ class FlagDB():
                 upsert=True
             )
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
     def select_flags(self, limit=0):
@@ -62,21 +69,22 @@ class FlagDB():
             docs = yield self.col.find(limit=limit)
             defer.returnValue(docs)
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
-    def select_new_and_pending(self):
+    def select_new_and_pending(self, limit=100):
         """Return all flags with status new and pending for submission."""
         try:
             flags = yield self.col.find({
                 '$or': [
                     {'state': 'NEW'},
                     {'state': 'PENDING'}
-                ]}
+                ]},
+                limit=limit
             )
             defer.returnValue(flags)
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
     def update_submitted(self, flag):
@@ -90,7 +98,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
     def update_pending(self, flag):
@@ -104,7 +112,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
     def update_expired(self, flag):
@@ -117,7 +125,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
     def update_failed(self, flag):
@@ -131,7 +139,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
     def insert_service(self, service):
@@ -153,7 +161,7 @@ class FlagDB():
                 upsert=True
             )
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
     def update_service_up(self, service):
@@ -167,7 +175,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
     def update_service_down(self, service):
@@ -181,7 +189,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
     def select_services(self, limit=0):
@@ -190,7 +198,7 @@ class FlagDB():
             services = yield self.col_services.find(limit=limit)
             defer.returnValue(services)
         except Exception as e:
-            log.warning(e)
+            log.debug(e)
 
     @defer.inlineCallbacks
     def stats(self):
@@ -206,4 +214,4 @@ class FlagDB():
             stats['pendingCount'] = yield self.col.count({'state': 'PENDING'})
             defer.returnValue(stats)
         except Exception as e:
-            log.warning(e)
+            log.debug(e)

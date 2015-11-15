@@ -1,5 +1,5 @@
 import sys
-import pprint
+import time
 from twisted.internet.task import LoopingCall
 from twisted.internet import reactor, protocol, defer
 
@@ -29,41 +29,60 @@ SERVICE_ALIVE_INTERVAL = 5
 # to the validity times of flags. But this may vary.
 CTF_ROUND_DURATION = 150
 
-
-@defer.inlineCallbacks
-def submit_flags():
-    """Flag submission job, runs every SERVICE_SUBMIT_INTERVAL seconds."""
-    try:
-        flags = yield flag_db.select_new_and_pending()
-
-        if flags:
-            log.info('[\033[1;35mSUBMIT\033[0m] [COUNT {}]'.format(len(flags)))
-            reactor.connectTCP(GAMESERVER_ADDR, GAMESERVER_PORT, FlagSubmissionFactory(flags, flag_db))
-        else:
-            log.info('[\033[1;35mSUBMIT\033[0m] No NEW/PENDING flags for submission...')
-    except Exception as e:
-        log.warning(e)
+# How many flags should be submitted at the same time at max.
+MAX_FLAG_SUBMITS = 200
 
 
-@defer.inlineCallbacks
-def print_flag_stats():
-    """Database statistics that will be printed every SERVICE_STATS_INTERVAL seconds."""
-    try:
-        stats = yield flag_db.stats()
-        log.stats('[\033[1;35mFLAGS\033[0m] [\033[93mTOTAL\033[0m \033[1;1m{}\033[0m] [\033[93mSUBMITTED\033[0m \033[1;1m{}\033[0m] [\033[93mEXPIRED\033[0m \033[1;1m{}\033[0m] [\033[93mFAILED\033[0m \033[1;1m{}\033[0m] [\033[93mNEW\033[0m \033[1;1m{}\033[0m] [\033[93mPENDING\033[0m \033[1;1m{}\033[0m]'.format(
-            stats.get('totalFlags'),
-            stats.get('submittedCount'),
-            stats.get('expiredCount'),
-            stats.get('failedCount'),
-            stats.get('newCount'),
-            stats.get('pendingCount')
-        ))
-    except Exception as e:
-        log.warning(e)
+class Submitter(LoopingCall):
+    """
+    Flag submission job, runs every SERVICE_SUBMIT_INTERVAL seconds.
+    """
+    def __init__(self, *args, **kwargs):
+        super(Submitter, self).__init__(self.callback, *args, **kwargs)
+
+    @defer.inlineCallbacks
+    def callback(self):
+        log.debug('started Submitter.callback()')
+        t0 = time.time()
+        try:
+            flags = yield flag_db.select_new_and_pending(limit=MAX_FLAG_SUBMITS)
+
+            if flags:
+                log.info('[SUBMIT] [COUNT {}]'.format(len(flags)))
+                reactor.connectTCP(GAMESERVER_ADDR, GAMESERVER_PORT, FlagSubmissionFactory(flags, flag_db))
+            else:
+                log.info('[SUBMIT] No NEW/PENDING flags for submission...')
+        except Exception as e:
+            log.warning(e)
+
+        log.debug('finished Submitter.callback() took {}'.format(time.time()-t0))
 
 
-def alive():
-    print('alive!')
+class Stats(LoopingCall):
+    """
+    Database statistics that will be printed every SERVICE_STATS_INTERVAL seconds.
+    """
+    def __init__(self, *args, **kwargs):
+        super(Stats, self).__init__(self.callback, *args, **kwargs)
+
+    @defer.inlineCallbacks
+    def callback(self):
+        log.debug('started Stats.callback()')
+        t0 = time.time()
+        try:
+            stats = yield flag_db.stats()
+            log.stats('[FLAGS] [TOTAL {}] [SUBMITTED {}] [EXPIRED {}] [FAILED {}] [NEW {}] [PENDING {}]'.format(
+                stats.get('totalFlags'),
+                stats.get('submittedCount'),
+                stats.get('expiredCount'),
+                stats.get('failedCount'),
+                stats.get('newCount'),
+                stats.get('pendingCount')
+            ))
+        except Exception as e:
+            log.warning(e)
+
+        log.debug('finished Stats.callback() took {}'.format(time.time()-t0))
 
 
 def run_flagservice():
@@ -72,16 +91,14 @@ def run_flagservice():
     in order to start the flag-service.
     """
     try:
+        log.info('Starting flagservice')
         # Factory for the flag receiver
         factory = protocol.ServerFactory()
         factory.protocol = FlagReceiverProtocol
         reactor.listenTCP(SERVICE_PORT,factory,interface=SERVICE_ADDR)
 
-        #aliver = LoopingCall(alive)
-        #aliver.start(2)
-
         # Print stats every SERVICE_STATS_INTERVAL seconds.
-        stats = LoopingCall(print_flag_stats)
+        stats = Stats()
         stats.start(SERVICE_STATS_INTERVAL, now=True)
 
         # Update states of known services every SERVICE_ALIVE_INTERVAL seconds.
@@ -89,7 +106,7 @@ def run_flagservice():
         #checker.start(SERVICE_ALIVE_INTERVAL)
 
         # Try submitting NEW and PENDING flags every SERVICE_RESUBMIT_INTERVAL seconds.
-        submit = LoopingCall(submit_flags)
+        submit = Submitter()
         submit.start(SERVICE_SUBMIT_INTERVAL, now=True)
 
         reactor.run()
