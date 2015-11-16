@@ -1,9 +1,7 @@
-ctf-pwn
-=======
+Offensive CTF Framework
+=======================
 
 A simple offensive framework for attack/defense CTFs. It takes care of running exploits and handles periodic flag submission. Mainly for preventing loss of flags due to unreachable gameservers.
-
-It is split into two major parts: the `exploitservice` and `flagservice`, each is a separate Twisted application. They share a single MongoDB instance.
 
 **TODO**:
 
@@ -13,11 +11,15 @@ It is split into two major parts: the `exploitservice` and `flagservice`, each i
 ** Portscans? With Twisted or maybe Nmap?
 * Implement periodic checks of own services.
 
-# exploitservice
+# Services
+
+This framework is split into two major parts: the `exploitservice` and `flagservice`, each is a separate Twisted application. They share a single MongoDB instance.
+
+## exploitservice
 
 This service is responsible for the execution of exploits.
 
-## Exploits
+### Exploits
 
 An exploit is supposed to be an executable file, which takes two arguments:
 
@@ -26,7 +28,26 @@ An exploit is supposed to be an executable file, which takes two arguments:
 
 Exploits are supposed to print one or more flags, nothing else. Exploits should reside in an own directory under `/srv/exploits`.
 
-## Schedule exploits for execution
+Here is a simple exploit example:
+
+```python
+#!/usr/bin/env python2
+
+def exploit():
+    # Do the exploitation stuff here
+
+if __name__ == '__main__':
+    flags = exploit()
+    
+    for flag in flags:
+        print(flag)
+```
+
+### Exploit templates
+
+The `template` directory includes templates for exploits. These are supposed to make the process of writing exploits quicker and easier. However, they should stay as simple as possible in order to be useful for everyone.
+
+### Schedule exploits for execution
 
 In order to schedule exploits, the have to be added to the exploits collection. A new exploit can be added to the database as follows:
 
@@ -57,7 +78,7 @@ cd /srv/ctf-pwn/exploitservice
 
 
 
-# flagservice
+## flagservice
 
 The flagservice periodically queries flags from the `flags` collection and tries to submit them to the gameserver.
 
@@ -83,13 +104,13 @@ Both services log to the `/srv/logs/{exploitservice,flagservice}` directories. E
 
 It is recommended to monitor both streams in different shells as follows:
 
-## stdout
+##### stdout
 
 ```
 tail -f {exploitservice,flagservice}/stdout.log |ccze
 ```
 
-## stderr
+##### stderr
 
 ```
 tail -f {exploitservice,flagservice}/stderr.log |ccze
