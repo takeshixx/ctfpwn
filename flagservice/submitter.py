@@ -49,7 +49,7 @@ class FlagSubmissionProtocol(protocol.Protocol, policies.TimeoutMixin):
             # ))
             self.flags_success.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_SERVICE_DOWN in incoming:
-            log.error('[{}] [SERVICE NOT AVAILABLE]'.format(
+            log.error('[{}] [GAMESERVER REPORTED SERVICE NOT AVAILABLE]'.format(
                 self.current_flag.get('service')
             ))
             self.flags_pending.append(self.current_flag.get('flag'))
