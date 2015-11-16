@@ -35,6 +35,7 @@ Here is a simple exploit example:
 
 def exploit():
     # Do the exploitation stuff here
+    return flags
 
 if __name__ == '__main__':
     flags = exploit()
@@ -45,7 +46,7 @@ if __name__ == '__main__':
 
 ### Exploit templates
 
-The `template` directory includes templates for exploits. These are supposed to make the process of writing exploits quicker and easier. However, they should stay as simple as possible in order to be useful for everyone.
+The `templates` directory includes templates for exploits. These are supposed to make the process of writing exploits quicker and easier. However, they should stay as simple as possible in order to be useful for everyone.
 
 ### Schedule exploits for execution
 
