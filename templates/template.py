@@ -9,38 +9,50 @@ import socket
 # Docs: http://docs.python-requests.org/en/latest/
 import requests
 
+if sys.version_info > (3,0,0):
+    xrange = range
 
-def get_something_via_http():
-    response = requests.get('http://example.org/abc')
-    print(response.text)
+def get_by_http(url):
+    response = requests.get(url)
+    return response.text
 
 
-def recv_end(the_socket, end=']'):
-    """This function reads from a socket until it hits whats defined in end."""
-    total_data=[];data=''
-    while True:
-            data=the_socket.recv(8192)
-            if end in data:
-                total_data.append(data[:data.find(end)])
+def recv_until(socket, end=']', data_max=1024*1024*16):
+    """This function reads from a socket until it hits whats defined in end.
+    If end is empty, it will recieve all data."""
+    total_data=[]
+    data=''
+    # We will only recieve data to a certain maximum, just to be more robust.
+    part_size=8192
+    part_amount=data_max/part_size
+    for part_id in xrange(part_amount):
+        data=socket.recv(8192)
+        if not data:
+            break
+        if end and end in data:
+            total_data.append(data[:data.find(end)])
+            break
+        total_data.append(data)
+        if len(total_data)>1:
+            last_pair=total_data[-2]+total_data[-1]
+            if end in last_pair:
+                total_data[-2]=last_pair[:last_pair.find(end)]
+                total_data.pop()
                 break
-            total_data.append(data)
-            if len(total_data)>1:
-                last_pair=total_data[-2]+total_data[-1]
-                if end in last_pair:
-                    total_data[-2]=last_pair[:last_pair.find(end)]
-                    total_data.pop()
-                    break
     return ''.join(total_data)
 
+def recv_all(socket, data_max=1024*1024*16):
+    recv_until(socket, end='', data_max=data_max)
 
-def exploit():
+
+def exploit(targetIP, targetPort):
     # Do all the exploitation stuff here, return a list of flags
     pass
 
 
-def main():
+def main(targetIP, targetPort):
     try:
-        flags = exploit()
+        flags = exploit(targetIP, targetPort)
 
         # The exploit only needs to print the flags, one per line.
         for flag in flags:
@@ -52,4 +64,7 @@ def main():
         return 1
 
 if __name__ == '__main__':
-    sys.exit(main())
+    # Read ip and port from commandline
+    targetIP = sys.argv[1]
+    targetPort = sys.argv[2]
+    sys.exit(main(targetIP, targetPort))
