@@ -10,8 +10,6 @@ from .receiver import FlagReceiverProtocol
 from .submitter import FlagSubmissionFactory
 from .checker import ServiceChecker
 
-DEBUG = True
-
 # Local flag-service settings
 SERVICE_PORT = 8081
 SERVICE_ADDR = '127.0.0.1'
@@ -21,16 +19,15 @@ GAMESERVER_ADDR = '127.0.0.1'
 GAMESERVER_PORT = 9000
 
 # Interval settings for all jobs
-SERVICE_SUBMIT_INTERVAL = 8
+SERVICE_SUBMIT_INTERVAL = 12
 SERVICE_STATS_INTERVAL = 5
-SERVICE_ALIVE_INTERVAL = 5
 
 # According to rules, a round is about ~2 min, this corresponds
 # to the validity times of flags. But this may vary.
-CTF_ROUND_DURATION = 150
+CTF_ROUND_DURATION = 120
 
 # How many flags should be submitted at the same time at max.
-MAX_FLAG_SUBMITS = 200
+MAX_FLAG_SUBMITS = 1000
 
 
 class Submitter(LoopingCall):

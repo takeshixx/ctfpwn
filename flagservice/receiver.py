@@ -5,7 +5,6 @@ This may be obsolete because the exploit supervisor pushes flags directly
 to the database. However, it could still run for testing purposes during
 exploit development."""
 import re
-from twisted.python import log
 from twisted.internet import protocol
 
 from .shared import flag_db

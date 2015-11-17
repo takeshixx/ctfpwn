@@ -1,7 +1,6 @@
 """This module includes everything that is needed to submit flags to
 the gameserver."""
 import time
-import datetime
 from twisted.internet import protocol
 from twisted.protocols import policies
 
@@ -70,7 +69,7 @@ class FlagSubmissionProtocol(protocol.Protocol, policies.TimeoutMixin):
             self.transport.loseConnection()
             return
         else:
-            log.warning('Unknown gameserver message: {}'.format(incoming))
+            log.warning('Unknown gameserver message: {}'.format(incoming.strip()))
 
         if not len(self.flags):
             self.transport.loseConnection()

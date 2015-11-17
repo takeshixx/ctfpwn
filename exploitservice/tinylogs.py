@@ -38,9 +38,7 @@ class TinyLogs:
         print('[SCORE] [{}] {}'.format(self.timestamp(), str(msg)))
 
     def stats(self,msg):
-        print('*'*90)
         print('[STATS] [{}] {}'.format(self.timestamp(), str(msg)))
-        print('*'*90)
 
 
 log = TinyLogs(debug=True)
