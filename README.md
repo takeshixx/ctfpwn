@@ -3,6 +3,11 @@ Offensive CTF Framework
 
 A simple offensive framework for attack/defense CTFs. It takes care of running exploits and handles periodic flag submission. Mainly for preventing loss of flags due to unreachable gameservers.
 
+**Requirements**:
+
+* Python2.7
+* MongoDB
+
 **TODO**:
 
 * Add info of new structure to `README.md`.
