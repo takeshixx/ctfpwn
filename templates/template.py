@@ -12,6 +12,10 @@ import requests
 if sys.version_info > (3,0,0):
     xrange = range
 
+if len(sys.argv) is not 3:
+    print('Usage: {} [ip] [port]'.format(sys.argv[0]))
+
+
 def get_by_http(url):
     response = requests.get(url)
     return response.text
@@ -41,6 +45,7 @@ def recv_until(socket, end=']', data_max=1024*1024*16):
                 break
     return ''.join(total_data)
 
+
 def recv_all(socket, data_max=1024*1024*16):
     recv_until(socket, end='', data_max=data_max)
 
@@ -62,6 +67,7 @@ def main(targetIP, targetPort):
     except Exception as e:
         print(e)
         return 1
+
 
 if __name__ == '__main__':
     # Read ip and port from commandline
