@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+"""This script just populates all possible hosts in 
+the CTF range. It is only needed for database initialization."""
 import sys
 from pymongo import MongoClient
 
