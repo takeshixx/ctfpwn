@@ -8,11 +8,13 @@ from .tinylogs import log
 
 # Messages by the gameserver, need to be adjusted
 GAME_SERVER_MSG_SUCCESS = 'accepted'
+GAME_SERVER_MSG_SUCCESS2 = 'congratulations'
 GAME_SERVER_MSG_EXPIRED = 'expired'
 GAME_SERVER_MSG_SERVICE_DOWN = 'corresponding'
 GAME_SERVER_MSG_INVALID = 'no such flag'
 GAME_SERVER_MSG_OWN_FLAG = 'own flag'
 GAME_SERVER_MSG_TOO_MUCH = 'too much'
+GAME_SERVER_MSG_ALREADY_SUBMITTED = 'already submitted'
 
 class FlagSubmissionProtocol(protocol.Protocol, policies.TimeoutMixin):
     """
@@ -39,7 +41,7 @@ class FlagSubmissionProtocol(protocol.Protocol, policies.TimeoutMixin):
     def dataReceived(self, incoming):
         self.resetTimeout()
 
-        if GAME_SERVER_MSG_SUCCESS in incoming:
+        if GAME_SERVER_MSG_SUCCESS in incoming or GAME_SERVER_MSG_SUCCESS2 in incoming:
             # log.score('[{}] [FLAG {}] [TARGET {}] [CAPTURED {}]'.format(
             #     self.current_flag.get('service'),
             #     self.current_flag.get('flag'),
@@ -60,6 +62,9 @@ class FlagSubmissionProtocol(protocol.Protocol, policies.TimeoutMixin):
             self.flags_failed.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_OWN_FLAG in incoming:
             #log.debug('Own flag')
+            self.flags_failed.append(self.current_flag.get('flag'))
+        elif GAME_SERVER_MSG_ALREADY_SUBMITTED in incoming:
+            #log.debug('Flag already submitted')
             self.flags_failed.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_TOO_MUCH in incoming:
             """TODO: The gameserver may complains about too much connections from our team.
