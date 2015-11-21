@@ -26,7 +26,7 @@ class FlagDB():
     """
     def __init__(self):
         try:
-            self.mongo = txmongo.lazyMongoConnectionPool(pool_size=SERVICE_MONGO_POOLSIZE, host="172.23.11.142")
+            self.mongo = txmongo.lazyMongoConnectionPool(pool_size=SERVICE_MONGO_POOLSIZE)
             self.db = self.mongo.flagservice
             self.col = self.db.flags
             self.col_services = self.db.services

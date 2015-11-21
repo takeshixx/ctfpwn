@@ -12,11 +12,13 @@ if __name__ == '__main__':
         print(e)
         sys.exit(1)
 
+    col.update({}, {'$set': {'alive': False}}, multi=True)
+
     for target in f.readline():
         col.update_one(
             {'host': target},
             {
-                $set: {
+                '$set': {
                     'alive': True
                 }
             }
