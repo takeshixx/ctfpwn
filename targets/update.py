@@ -12,9 +12,9 @@ if __name__ == '__main__':
         print(e)
         sys.exit(1)
 
-    col.update({}, {'$set': {'alive': False}}, multi=True)
-
-    for target in f.readline():
+    hosts = set(e['host'].encode() for e in col.find())
+    for target in f:
+        target = target.strip()
         col.update_one(
             {'host': target},
             {
@@ -23,6 +23,18 @@ if __name__ == '__main__':
                 }
             }
         )
+        if target in hosts:
+            hosts.remove(target)
+
+    print("#Hosts remaining: %d" % len(hosts))
+    for h in hosts:
+        col.update_one(
+            {'host': target},
+            {
+                '$set': {
+                    'alive': False
+                }
+            }
+        )
 
     print('Targets updated')
-

@@ -15,5 +15,5 @@ while :;do
     eval "nmap -T5 -sP -PS22,80 -oG /srv/targets/nmap.out ${targets}"
     cat /srv/targets/nmap.out | grep "Status: Up" | awk '{print $2}' > /srv/targets/alive
     /srv/ctf-pwn/targets/update.py
-    sleep 10;
+    sleep 25;
 done
