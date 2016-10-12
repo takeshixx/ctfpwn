@@ -8,14 +8,6 @@ A simple offensive framework for attack/defense CTFs. It takes care of running e
 * Python2.7
 * MongoDB
 
-**TODO**:
-
-* Add info of new structure to `README.md`.
-* Implement a way to update a list of proper targets.
-** Just pings?
-** Portscans? With Twisted or maybe Nmap?
-* Implement periodic checks of own services.
-
 # Services
 
 This framework is split into two major parts: the `exploitservice` and `flagservice`, each is a separate Twisted application. They share a single MongoDB instance.
