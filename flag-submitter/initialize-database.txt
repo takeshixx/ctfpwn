@@ -1,8 +1,0 @@
-CREATE DATABASE flagservice;
-
-GRANT ALL ON flagservice.* TO 'flagservice'@'%' IDENTIFIED BY '6_-fKSAJz3dz?>Z]';
-
-CREATE TABLE flags (fid INT AUTO_INCREMENT PRIMARY KEY ,service VARCHAR(50),target VARCHAR(50),flag VARCHAR(50),state VARCHAR(50),comment VARCHAR(100),timestamp VARCHAR(50));
-
-# delete everything from table
-TRUNCATE TABLE flags;

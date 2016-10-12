@@ -1,55 +1,128 @@
-ctf-pwn
-=======
+Offensive CTF Framework
+=======================
 
-**Note**: This is (still) old code, which partially sucks. But it should provide a brief understanding on what may be done. There is a lot of room for improvements.
+A simple offensive framework for attack/defense CTFs. It takes care of running exploits and handles periodic flag submission. Mainly for preventing loss of flags due to unreachable gameservers.
 
+**Requirements**:
 
-A simple offensive framework for attack/defense CTFs. It takes care of running exploits and flag submission. Mainly for preventing loss of flags due to unreachable gameservers.
+* Python2.7
+* MongoDB
 
-## flag-submitter
+# Services
 
-### service
-Listening on a TCP socket, takes flags and stores them in a (MariaDB/MySQL) database. Submits new flags and retrys if the gameserver is down. Takes one or more flags in the following format:
+This framework is split into two major parts: the `exploitservice` and `flagservice`, each is a separate Twisted application. They share a single MongoDB instance.
 
-```    
-SERVICE|TARGET|FLAG
-```
+## exploitservice
 
-The flag-submitter service runs on TCP port ```8000```
+This service is responsible for the execution of exploits.
 
-### frontend
-Tiny Flask application which provides a JSON based REST API via HTTP. It just reads some stats from the database and returns them in a JSON object. Currently only the base path returns some data. Someone should write some fancy statistic function. The frontend listens on TCP port ```8001```.
+### Exploits
 
-Get (nearly) live simple stats:
+An exploit is supposed to be an executable file, which takes two arguments:
+
+1. Target IP address
+2. Port number
+
+Exploits are supposed to print one or more flags, nothing else. Exploits should reside in an own directory under `/srv/exploits`.
+
+Here is a simple exploit example:
+
+```python
+#!/usr/bin/env python2
+
+def exploit():
+    # Do the exploitation stuff here
+    return flags
+
+if __name__ == '__main__':
+    flags = exploit()
     
-**watch -n1 curl -s http://localhost:8001/**
-
-### Deyploment
-First, run **init.sh** to initialize the setup and do some dependency checking.
-
-Use **requirements.txt** to deploy a virtualenv:
-    
-```
-virtualenv env
-env/bin/pip install -r requirements.txt
+    for flag in flags:
+        print(flag)
 ```
 
-Run service and frontend:
-    
+### Exploit templates
+
+The `templates` directory includes templates for exploits. These are supposed to make the process of writing exploits quicker and easier. However, they should stay as simple as possible in order to be useful for everyone.
+
+### Schedule exploits for execution
+
+In order to schedule exploits, the have to be added to the exploits collection. A new exploit can be added to the database as follows:
+
 ```
-env/bin/python run-service.py
+db.exploits.insert({
+    "exploit" :     "/srv/exploits/crasher/unstable_exploit.py",
+    "port" :        8081,
+    "service" :     "crasher",
+    "enabled" :     true
+})
 ```
 
-Note: The service should run in a separate shell because it prints ANSI color output to STDOUT. ```aterm``` proofed to handle massive STDOUT output pretty good.
+The exploitservice contains a simple wrapper script called `client.py` which can be used to add exploits from the command line:
 
 ```
-env/bin/python run-frontend.py
+cd /srv/ctf-pwn/exploitservice
+../env/bin/python client.py crasher /srv/exploits/crasher/unstable_exploit.py 8081 false
 ```
 
-## exploit
-The **parallel.sh** script is a simple wrapper for GNU parallel. It runs simple exploit scripts in parallel.
-    
-**./parallel.sh targets.txt exploit.py**
+Executing the same command with `true` instead of `false` will enable the exploit:
 
-* **targets.txt**: Should be a file with IP addresses, one per line.
-* **exploit.py**: An exploit script which takes one argument, an IP address, and outputs one or more flag/s in flag-submitter-friendly output. Can be any kind of executable (binaries, shell/python/ruby/perl/etc scripts).
+```
+cd /srv/ctf-pwn/exploitservice
+../env/bin/python client.py crasher /srv/exploits/crasher/unstable_exploit.py 8081 true
+```
+
+*Note*: Currently `client.py` must be executed exactly like this, with an absolute path. It is also mandatory to executed it from within the exploitservice directory because it relies on the `exploitdb.py` module.
+
+
+
+## flagservice
+
+The flagservice periodically queries flags from the `flags` collection and tries to submit them to the gameserver.
+
+## TCP/IP interface
+
+In case the exploitservice fails, flagservice provides a fallback interface which allows to submit flags on the local network via a telnet-like service running on TCP port `8081`.
+
+Submission format looks as follows:
+
+```
+SERVICE|TARGET|FLAG|TIMESTAMP
+```
+
+Here is an example:
+
+```
+smartgrid|10.23.103.2|JAJAJAJAJAJAJAJAJAJAJAJAJAJAJAA=|1446295211
+```
+
+# Monitoring the services
+
+Both services log to the `/srv/logs/{exploitservice,flagservice}` directories. Each contains a `stdout.log` and `stderr.log` file.
+
+It is recommended to monitor both streams in different shells as follows:
+
+##### stdout
+
+```
+tail -f {exploitservice,flagservice}/stdout.log |ccze
+```
+
+##### stderr
+
+```
+tail -f {exploitservice,flagservice}/stderr.log |ccze
+```
+
+*Note*: It is not recommended to log bot `stdout.log` and `stderr.log` to the same shell as it might result in a flood of messages.
+
+# Manage services
+
+Both services are managed via Supervisor. They can be started via `supervisorctl`, e.g.:
+
+```
+# supervisorctl
+supervisor> restart exploitservice
+```
+
+or via a web interface running on TCP port `9001`.
