@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import re
-from twisted.internet import task, defer, reactor, protocol
+from twisted.internet import task, defer, protocol
 
 DEBUG = True
 
@@ -17,7 +17,8 @@ except ValueError:
     sys.exit(1)
 
 # Global instance to grep for flags, e.g.JAJAJAJAJAJAJAJAJAJAJAJAJAJAJAA=
-FLAG_GREP = re.compile(r"(\w{31}=)")
+FLAG_GREP = re.compile(br"(\w{31}=)")
+
 
 class Exploit(protocol.Protocol):
     """This is where the protocol has to be implemented."""
@@ -34,11 +35,14 @@ class Exploit(protocol.Protocol):
             print('received: {}'.format(data))
 
     def writeLine(self, data):
+        if hasattr(data, 'encode'):
+            data = data.encode('utf-8')
         self.transport.write(data)
-        self.transport.write('\n')
+        self.transport.write(b'\n')
 
     def connectionLost(self, reason):
         pass
+
 
 class ExploitFactory(protocol.ClientFactory):
     """This class is more or less just a Twisted formality. Changing

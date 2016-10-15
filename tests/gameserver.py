@@ -4,12 +4,15 @@ import sys
 import socket
 import re
 from random import choice
-from thread import *
-states = ['expired','no such flag','accepted', 'corresponding', 'own flag']
-flag_grep = re.compile(r"(\w{31}=)")
+from threading import Thread
+import time
+
+states = [b'expired', b'no such flag', b'accepted', b'corresponding', b'own flag']
+flag_grep = re.compile(br"(\w{31}=)")
+
 
 def clientthread(conn, addr):
-    conn.send('Welcome to the gameserver and stuff\n')
+    conn.send(b'Welcome to the gameserver and stuff\n')
     print('New connection from {}'.format(addr[0]))
     flags = []
     while True:
@@ -17,9 +20,10 @@ def clientthread(conn, addr):
             data = conn.recv(1024)
             flags += flag_grep.findall(data)
             resp = choice(states)
-            conn.send(resp+'\n')
+            conn.send(resp+b'\n')
         except Exception as e:
             print('Received {} flags'.format(len(flags)))
+            print(e)
             conn.close()
             return
 
@@ -28,11 +32,19 @@ while True:
         sock = socket.socket()
         sock.bind(('127.0.0.1', 9000))
         sock.listen(10)
+        print("Gameserver is up and listening")
         while True:
             conn, addr = sock.accept()
-            start_new_thread(clientthread,(conn, addr))
+            t = Thread(target=clientthread,
+                       args=(conn, addr))
+            t.start()
     except KeyboardInterrupt:
         sock.close()
         sys.exit(0)
+    except IOError as e:
+        print(str(e))
+        if e.errno == 98:
+            print("Sleeping 5s")
+            time.sleep(5)
     except Exception as e:
         print(str(e))

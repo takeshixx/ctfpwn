@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import time
 from twisted.internet.task import LoopingCall
@@ -5,10 +6,8 @@ from twisted.internet import reactor, protocol, defer
 
 from .shared import flag_db
 from .tinylogs import log
-from .flagdb import FlagDB, Flag
 from .receiver import FlagReceiverProtocol
 from .submitter import FlagSubmissionFactory
-from .checker import ServiceChecker
 
 # Local flag-service settings
 SERVICE_PORT = 8081
@@ -92,15 +91,15 @@ def run_flagservice():
         # Factory for the flag receiver
         factory = protocol.ServerFactory()
         factory.protocol = FlagReceiverProtocol
-        reactor.listenTCP(SERVICE_PORT,factory,interface=SERVICE_ADDR)
+        reactor.listenTCP(SERVICE_PORT, factory, interface=SERVICE_ADDR)
 
         # Print stats every SERVICE_STATS_INTERVAL seconds.
         stats = Stats()
         stats.start(SERVICE_STATS_INTERVAL, now=True)
 
         # Update states of known services every SERVICE_ALIVE_INTERVAL seconds.
-        #checker = ServiceChecker()
-        #checker.start(SERVICE_ALIVE_INTERVAL)
+        # checker = ServiceChecker()
+        # checker.start(SERVICE_ALIVE_INTERVAL)
 
         # Try submitting NEW and PENDING flags every SERVICE_RESUBMIT_INTERVAL seconds.
         submit = Submitter()

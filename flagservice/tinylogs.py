@@ -2,6 +2,7 @@ from __future__ import print_function
 import sys
 import time
 
+
 class TinyLogs:
     def __init__(self, debug=False):
         self.c_error = '\033[1;31m'
@@ -21,23 +22,23 @@ class TinyLogs:
     def timestamp(self):
         return time.strftime('%H:%M:%S')
 
-    def warning(self,msg):
+    def warning(self, msg):
         print('[WARNING] [{}] {}'.format(self.timestamp(), str(msg)))
 
-    def error(self,msg):
+    def error(self, msg):
         print('[ERROR] [{}] {}'.format(self.timestamp(), str(msg)), file=sys.stderr)
 
-    def debug(self,msg):
+    def debug(self, msg):
         if self.DEBUG:
             print('[DEBUG] [{}] {}'.format(self.timestamp(), str(msg)))
 
-    def info(self,msg):
+    def info(self, msg):
         print('[INFO] [{}] {}'.format(self.timestamp(), str(msg)))
 
-    def score(self,msg):
+    def score(self, msg):
         print('[SCORE] [{}] {}'.format(self.timestamp(), str(msg)))
 
-    def stats(self,msg):
+    def stats(self, msg):
         print('[STATS] [{}] {}'.format(self.timestamp(), str(msg)))
 
 

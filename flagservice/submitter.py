@@ -7,14 +7,15 @@ from twisted.protocols import policies
 from .tinylogs import log
 
 # Messages by the gameserver, need to be adjusted
-GAME_SERVER_MSG_SUCCESS = 'accepted'
-GAME_SERVER_MSG_SUCCESS2 = 'congratulations'
-GAME_SERVER_MSG_EXPIRED = 'expired'
-GAME_SERVER_MSG_SERVICE_DOWN = 'corresponding'
-GAME_SERVER_MSG_INVALID = 'no such flag'
-GAME_SERVER_MSG_OWN_FLAG = 'own flag'
-GAME_SERVER_MSG_TOO_MUCH = 'too much'
-GAME_SERVER_MSG_ALREADY_SUBMITTED = 'already submitted'
+GAME_SERVER_MSG_SUCCESS = b'accepted'
+GAME_SERVER_MSG_SUCCESS2 = b'congratulations'
+GAME_SERVER_MSG_EXPIRED = b'expired'
+GAME_SERVER_MSG_SERVICE_DOWN = b'corresponding'
+GAME_SERVER_MSG_INVALID = b'no such flag'
+GAME_SERVER_MSG_OWN_FLAG = b'own flag'
+GAME_SERVER_MSG_TOO_MUCH = b'too much'
+GAME_SERVER_MSG_ALREADY_SUBMITTED = b'already submitted'
+
 
 class FlagSubmissionProtocol(protocol.Protocol, policies.TimeoutMixin):
     """
@@ -55,16 +56,16 @@ class FlagSubmissionProtocol(protocol.Protocol, policies.TimeoutMixin):
             ))
             self.flags_pending.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_EXPIRED in incoming:
-            #log.debug('Flag expired')
+            # log.debug('Flag expired')
             self.flags_expired.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_INVALID in incoming:
-            #log.debug('Invalid flag')
+            # log.debug('Invalid flag')
             self.flags_failed.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_OWN_FLAG in incoming:
-            #log.debug('Own flag')
+            # log.debug('Own flag')
             self.flags_failed.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_ALREADY_SUBMITTED in incoming:
-            #log.debug('Flag already submitted')
+            # log.debug('Flag already submitted')
             self.flags_failed.append(self.current_flag.get('flag'))
         elif GAME_SERVER_MSG_TOO_MUCH in incoming:
             """TODO: The gameserver may complains about too much connections from our team.
@@ -88,7 +89,7 @@ class FlagSubmissionProtocol(protocol.Protocol, policies.TimeoutMixin):
 
     def _write_line(self, line):
         self.resetTimeout()
-        self.transport.write('{}\n'.format(line))
+        self.transport.write('{}\n'.format(line).encode('utf-8'))
 
     def _update_flag_states(self):
         t0 = time.time()
@@ -139,7 +140,6 @@ class FlagSubmissionFactory(protocol.Factory):
 
     def clientConnectionLost(self, connector, reason):
         log.info('[GAMESERVER] [CONNECTION LOST] [REASON {}]'.format(reason.getErrorMessage()))
-
 
     def clientConnectionFailed(self, connector, reason):
         log.error('[GAMESERVER] [CONNECTION FAILED] [REASON {}]'.format(reason.getErrorMessage()))

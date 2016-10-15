@@ -10,10 +10,11 @@ from .tinylogs import log
 
 SERVICE_MONGO_POOLSIZE = 100
 
+
 class Flag():
     """A class that represents flags, as parsed from incoming lines. See REGEX_INPUT
     and the corresponding input format example."""
-    def __init__(self,incoming):
+    def __init__(self, incoming):
         self.service = incoming[0]
         self.target = incoming[1]
         self.flag = incoming[2]
@@ -92,7 +93,7 @@ class FlagDB():
         try:
             yield self.col.update(
                 {'flag': flag},
-                {'$set':{
+                {'$set': {
                     'state': 'SUBMITTED',
                     'submitted': int(time.time())
                 }}
@@ -107,7 +108,7 @@ class FlagDB():
         try:
             yield self.col.update(
                 {'flag': flag},
-                {'$set':{
+                {'$set': {
                     'state': 'PENDING'
                 }}
             )
@@ -120,7 +121,7 @@ class FlagDB():
         try:
             yield self.col.update(
                 {'flag': flag},
-                {'$set':{
+                {'$set': {
                     'state': 'EXPIRED'
                 }}
             )
@@ -134,7 +135,7 @@ class FlagDB():
         try:
             yield self.col.update(
                 {'flag': flag},
-                {'$set':{
+                {'$set': {
                     'state': 'FAILED'
                 }}
             )
@@ -169,7 +170,7 @@ class FlagDB():
         try:
             yield self.col_services.update(
                 {'name': service.name},
-                {'$set':{
+                {'$set': {
                     'state': 'UP',
                     'changed': int(time.time())
                 }}
@@ -183,7 +184,7 @@ class FlagDB():
         try:
             yield self.col_services.update(
                 {'name': service.name},
-                {'$set':{
+                {'$set': {
                     'state': 'DOWN',
                     'changed': int(time.time())
                 }}

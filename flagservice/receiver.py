@@ -22,9 +22,10 @@ REGEX_INPUT = '^{}\|{}\|{}\|{}$'.format(
     REGEX_IP,
     REGEX_FLAG,
     REGEX_TIMESTAMP
-)
+).encode()
 
 input_validation = re.compile(REGEX_INPUT)
+
 
 class FlagReceiverProtocol(protocol.Protocol):
     """
@@ -36,16 +37,17 @@ class FlagReceiverProtocol(protocol.Protocol):
         REGEX_INPUT, it will be inserted into the database.
         """
         try:
-            lines = incoming.split('\n')
+            lines = incoming.split(b'\n')
             for line in lines:
                 if not line:
                     continue
                 line = line.strip()
                 if input_validation.findall(line):
-                    flag = Flag(line.strip().split('|'))
+                    flag = Flag(line.strip().decode('utf-8', errors='replace').split('|'))
                     flag_db.insert_new(flag)
+                    self.transport.write(b'received\n')
                 else:
-                    self.transport.write('bogus format!\n')
-                    log.debug('False submission by {}'.format(self.transport.getPeer))
+                    self.transport.write(b'bogus format!\n')
+                    log.debug('False submission by {}'.format(self.transport.getPeer()))
         except Exception as e:
             log.warning('Error in dataReceive() function! [EXCEPTION: {}]'.format(e))
