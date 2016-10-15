@@ -6,7 +6,7 @@ from twisted.internet.task import LoopingCall
 from twisted.internet import reactor, protocol, defer
 from helperlib.logging import scope_logger, default_config, load_config
 
-from .shared import flag_db
+from .shared import flag_db, LOG_LEVEL_STAT
 from .receiver import FlagReceiverProtocol
 from .submitter import FlagSubmissionFactory
 
@@ -72,7 +72,7 @@ class Stats(LoopingCall):
         t0 = time.time()
         try:
             stats = yield flag_db.stats()
-            self.log.info('[STATS] [FLAGS] [TOTAL %d] [SUBMITTED %d] [EXPIRED %d] [FAILED %d] [NEW %d] [PENDING %d]',
+            self.log.log(LOG_LEVEL_STAT, '[FLAGS] [TOTAL %d] [SUBMITTED %d] [EXPIRED %d] [FAILED %d] [NEW %d] [PENDING %d]',
                 stats.get('totalFlags'),
                 stats.get('submittedCount'),
                 stats.get('expiredCount'),

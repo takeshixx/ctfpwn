@@ -5,6 +5,8 @@ from twisted.internet import protocol
 from twisted.protocols import policies
 from helperlib.logging import scope_logger
 
+from .shared import LOG_LEVEL_STAT
+
 
 # Messages by the gameserver, need to be adjusted
 GAME_SERVER_MSG_SUCCESS = b'accepted'
@@ -117,13 +119,13 @@ class FlagSubmissionProtocol(protocol.Protocol, policies.TimeoutMixin):
             for flag in self.flags:
                 self.db.update_pending(flag)
 
-        self.log.info('[STATS] [SUBMIT] [ACCEPTED %d] [PENDING %d] [EXPIRED %d] [UNKNOWN %d]',
+        self.log.log(LOG_LEVEL_STAT, '[SUBMIT] [ACCEPTED %d] [PENDING %d] [EXPIRED %d] [UNKNOWN %d]',
             len(self.flags_success),
             len(self.flags_pending + self.flags),
             len(self.flags_expired),
             len(self.flags_failed)
         )
-        self.log.info('[STATS] [GAMESERVER] _update_flag_states() took %f', time.time() - t0)
+        self.log.log(LOG_LEVEL_STAT, '[GAMESERVER] _update_flag_states() took %f', time.time() - t0)
 
 
 @scope_logger
