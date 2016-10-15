@@ -1,3 +1,4 @@
 Twisted
 txmongo
 ipaddress
+https://github.com/bluec0re/python-helperlib/archive/master.zip

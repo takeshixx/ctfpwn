@@ -4,11 +4,13 @@ import time
 import txmongo
 import txmongo.connection
 import txmongo.filter
+import logging
 from twisted.internet import defer
+from helperlib.logging import scope_logger
 
-from .tinylogs import log
 
 SERVICE_MONGO_POOLSIZE = 100
+log = logging.getLogger(__name__)
 
 
 class Flag():
@@ -21,6 +23,7 @@ class Flag():
         self.timestamp = int(time.time())
 
 
+@scope_logger
 class FlagDB():
     """
     An interface to the database.
@@ -33,7 +36,7 @@ class FlagDB():
             self.col_services = self.db.services
             self.setup_database_indexes()
         except Exception as e:
-            log.error('Error in FlagDB().__init__() [EXCEPTION {}]'.format(e))
+            self.log.exception('Error in FlagDB().__init__() [EXCEPTION %s]', e)
 
     @defer.inlineCallbacks
     def setup_database_indexes(self):
@@ -61,7 +64,7 @@ class FlagDB():
                 upsert=True
             )
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def select_flags(self, limit=0):
@@ -70,7 +73,7 @@ class FlagDB():
             docs = yield self.col.find(limit=limit)
             defer.returnValue(docs)
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def select_new_and_pending(self, limit=100):
@@ -85,7 +88,7 @@ class FlagDB():
             )
             defer.returnValue(flags)
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def update_submitted(self, flag):
@@ -99,7 +102,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def update_pending(self, flag):
@@ -113,7 +116,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def update_expired(self, flag):
@@ -126,7 +129,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def update_failed(self, flag):
@@ -140,7 +143,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def insert_service(self, service):
@@ -162,7 +165,7 @@ class FlagDB():
                 upsert=True
             )
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def update_service_up(self, service):
@@ -176,7 +179,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def update_service_down(self, service):
@@ -190,7 +193,7 @@ class FlagDB():
                 }}
             )
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def select_services(self, limit=0):
@@ -199,7 +202,7 @@ class FlagDB():
             services = yield self.col_services.find(limit=limit)
             defer.returnValue(services)
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)
 
     @defer.inlineCallbacks
     def stats(self):
@@ -215,4 +218,4 @@ class FlagDB():
             stats['pendingCount'] = yield self.col.count({'state': 'PENDING'})
             defer.returnValue(stats)
         except Exception as e:
-            log.debug(e)
+            self.log.debug(e)

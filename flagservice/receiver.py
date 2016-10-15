@@ -6,9 +6,9 @@ to the database. However, it could still run for testing purposes during
 exploit development."""
 import re
 from twisted.internet import protocol
+from helperlib.logging import scope_logger
 
 from .shared import flag_db
-from .tinylogs import log
 from .flagdb import Flag
 
 # Flag regex
@@ -27,6 +27,7 @@ REGEX_INPUT = '^{}\|{}\|{}\|{}$'.format(
 input_validation = re.compile(REGEX_INPUT)
 
 
+@scope_logger
 class FlagReceiverProtocol(protocol.Protocol):
     """
     Protocol factory for flag submission.
@@ -48,6 +49,6 @@ class FlagReceiverProtocol(protocol.Protocol):
                     self.transport.write(b'received\n')
                 else:
                     self.transport.write(b'bogus format!\n')
-                    log.debug('False submission by {}'.format(self.transport.getPeer()))
+                    self.log.debug('False submission by %s', self.transport.getPeer())
         except Exception as e:
-            log.warning('Error in dataReceive() function! [EXCEPTION: {}]'.format(e))
+            self.log.warning('Error in dataReceive() function! [EXCEPTION: %s]', e)
