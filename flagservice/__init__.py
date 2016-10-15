@@ -91,10 +91,10 @@ def run_flagservice():
     Main function which handles requests and application logic. This function needs to be called
     in order to start the flag-service.
     """
-    default_config(level=logging.DEBUG, disable_existing_loggers=False)
     try:
-        load_config('flagservice.ini')
+        load_config('flagservice.ini', disable_existing_loggers=False)
     except Exception as e:
+        default_config(level=logging.DEBUG, disable_existing_loggers=False)
         log.warning('No logging config file flagservice.ini found. Using default')
 
     try:
