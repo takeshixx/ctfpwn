@@ -21,33 +21,33 @@ def get_by_http(url):
     return response.text
 
 
-def recv_until(socket, end=']', data_max=1024*1024*16):
+def recv_until(socket, end=b']', data_max=1024*1024*16):
     """This function reads from a socket until it hits whats defined in end.
     If end is empty, it will recieve all data."""
-    total_data=[]
-    data=''
+    total_data = []
+    data = ''
     # We will only recieve data to a certain maximum, just to be more robust.
-    part_size=8192
-    part_amount=data_max/part_size
+    part_size = 8192
+    part_amount = data_max/part_size
     for part_id in xrange(part_amount):
-        data=socket.recv(8192)
+        data = socket.recv(8192)
         if not data:
             break
         if end and end in data:
             total_data.append(data[:data.find(end)])
             break
         total_data.append(data)
-        if len(total_data)>1:
-            last_pair=total_data[-2]+total_data[-1]
+        if len(total_data) > 1:
+            last_pair = total_data[-2] + total_data[-1]
             if end in last_pair:
-                total_data[-2]=last_pair[:last_pair.find(end)]
+                total_data[-2] = last_pair[:last_pair.find(end)]
                 total_data.pop()
                 break
-    return ''.join(total_data)
+    return b''.join(total_data)
 
 
 def recv_all(socket, data_max=1024*1024*16):
-    recv_until(socket, end='', data_max=data_max)
+    return recv_until(socket, end=b'', data_max=data_max)
 
 
 def exploit(targetIP, targetPort):

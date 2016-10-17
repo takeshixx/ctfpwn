@@ -1,4 +1,3 @@
-from twisted.python import log
 from twisted.internet import reactor, defer, protocol, task
 
 from .shared import flag_db

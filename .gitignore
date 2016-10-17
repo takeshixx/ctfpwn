@@ -58,4 +58,7 @@ docs/_build/
 target/
 
 #IDEs
-.idea/
+.idea
+
+venv/
+venv[23]/
