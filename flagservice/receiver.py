@@ -44,7 +44,8 @@ class FlagReceiverProtocol(protocol.Protocol):
                     continue
                 line = line.strip()
                 if input_validation.findall(line):
-                    flag = Flag(line.strip().decode('utf-8', errors='replace').split('|'))
+                    flagdata = line.strip().decode('utf-8', errors='replace').split('|')
+                    flag = Flag(flagdata[0], flagdata[1], flagdata[2])
                     flag_db.insert_new(flag)
                     self.transport.write(b'received\n')
                 else:
