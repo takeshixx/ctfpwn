@@ -1,26 +1,16 @@
 """This module provides an interface to the database and
 anything that is needed to handle flags."""
+import logging
 import time
+
 import txmongo
 import txmongo.connection
 import txmongo.filter
-import logging
-from twisted.internet import defer
 from helperlib.logging import scope_logger
-
+from twisted.internet import defer
 
 SERVICE_MONGO_POOLSIZE = 100
 log = logging.getLogger(__name__)
-
-
-class Flag():
-    """A class that represents flags, as parsed from incoming lines. See REGEX_INPUT
-    and the corresponding input format example."""
-    def __init__(self, incoming):
-        self.service = incoming[0]
-        self.target = incoming[1]
-        self.flag = incoming[2]
-        self.timestamp = int(time.time())
 
 
 @scope_logger

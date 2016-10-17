@@ -9,7 +9,7 @@ from twisted.internet import protocol
 from helperlib.logging import scope_logger
 
 from .shared import flag_db
-from .flagdb import Flag
+from flagservice.flag import Flag
 
 # Flag regex
 # Input format example: 'smartgrid|10.23.103.2|JAJAJAJAJAJAJAJAJAJAJAJAJAJAJAA=|1446295211'

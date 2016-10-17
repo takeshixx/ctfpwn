@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
+import logging
 import sys
 import time
-import logging
-from twisted.internet.task import LoopingCall
-from twisted.internet import reactor, protocol, defer
-from helperlib.logging import scope_logger, default_config, load_config
 
-from .shared import flag_db, LOG_LEVEL_STAT
+from helperlib.logging import scope_logger, default_config, load_config
+from twisted.internet import reactor, protocol, defer
+from twisted.internet.task import LoopingCall
+
+from flagservice.statistics import Statistics
 from .receiver import FlagReceiverProtocol
+from .shared import flag_db, LOG_LEVEL_STAT
 from .submitter import FlagSubmissionFactory
 
 log = logging.getLogger(__name__)
@@ -58,34 +60,6 @@ class Submitter(LoopingCall):
         self.log.debug('finished Submitter.callback() took %f', time.time() - t0)
 
 
-@scope_logger
-class Stats(LoopingCall):
-    """
-    Database statistics that will be printed every SERVICE_STATS_INTERVAL seconds.
-    """
-    def __init__(self, *args, **kwargs):
-        super(Stats, self).__init__(self.callback, *args, **kwargs)
-
-    @defer.inlineCallbacks
-    def callback(self):
-        self.log.debug('started Stats.callback()')
-        t0 = time.time()
-        try:
-            stats = yield flag_db.stats()
-            self.log.log(LOG_LEVEL_STAT, '[FLAGS] [TOTAL %d] [SUBMITTED %d] [EXPIRED %d] [FAILED %d] [NEW %d] [PENDING %d]',
-                stats.get('totalFlags'),
-                stats.get('submittedCount'),
-                stats.get('expiredCount'),
-                stats.get('failedCount'),
-                stats.get('newCount'),
-                stats.get('pendingCount')
-            )
-        except Exception as e:
-            self.log.warning(e)
-
-        self.log.debug('finished Stats.callback() took %f', time.time() - t0)
-
-
 def run_flagservice():
     """
     Main function which handles requests and application logic. This function needs to be called
@@ -105,7 +79,7 @@ def run_flagservice():
         reactor.listenTCP(SERVICE_PORT, factory, interface=SERVICE_ADDR)
 
         # Print stats every SERVICE_STATS_INTERVAL seconds.
-        stats = Stats()
+        stats = Statistics()
         stats.start(SERVICE_STATS_INTERVAL, now=True)
 
         # Update states of known services every SERVICE_ALIVE_INTERVAL seconds.
