@@ -1,6 +1,5 @@
 """This module provides an interface to the database and
 anything that is needed to handle flags."""
-#import asyncio
 import logging
 import time
 import motor.motor_asyncio
@@ -172,6 +171,6 @@ class FlagDB(object):
             stats['expiredCount'] = await self.col.count({'state': 'EXPIRED'})
             stats['failedCount'] = await self.col.count({'state': 'FAILED'})
             stats['pendingCount'] = await self.col.count({'state': 'PENDING'})
-            defer.returnValue(stats)
+            return stats
         except Exception as e:
             self.log.debug(e)

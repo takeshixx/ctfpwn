@@ -3,7 +3,7 @@ import sys
 import asyncio
 import logging
 
-from helperlib.logging import scope_logger, default_config, load_config
+from helperlib.logging import default_config, load_config
 
 from ctfpwn.flagservice.receiver import FlagReceiverProtocol
 from ctfpwn.flagservice.flagdb import FlagDB
