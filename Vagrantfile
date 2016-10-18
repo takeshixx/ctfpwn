@@ -68,6 +68,7 @@ Vagrant.configure("2") do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
+    apt-get upgrade -y
     apt-get install -y python3-pip mongodb supervisor
     systemctl enable mongodb
     systemctl start mongodb
