@@ -11,7 +11,7 @@ import codecs
 
 from helperlib.logging import scope_logger
 
-from ctfpwn import Flag
+from ctfpwn.shared import Flag
 
 log = logging.getLogger(__name__)
 

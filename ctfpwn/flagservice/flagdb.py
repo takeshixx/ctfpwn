@@ -19,7 +19,7 @@ class FlagDB(object):
         try:
             self.mongo = motor.motor_asyncio.AsyncIOMotorClient()
             self.db = self.mongo.flagservice
-            self.col = self.db.flags
+            self.col_flags = self.db.flags
             self.col_services = self.db.services
         except Exception as e:
             self.log.exception(e)
@@ -39,7 +39,7 @@ class FlagDB(object):
         """Insert a new flag if it does not already exist,
         set status to NEW."""
         try:
-            return await self.col.update_one(
+            return await self.col_flags.update_one(
                 {'flag': flag.flag},
                 {'$setOnInsert':
                     {'service': flag.service,
@@ -56,7 +56,7 @@ class FlagDB(object):
         """Return <limit> flags from database. Defaults
         to all documents."""
         try:
-            return self.col.find(limit=limit)
+            return self.col_flags.find(limit=limit)
         except Exception as e:
             self.log.debug(e)
 
@@ -64,7 +64,7 @@ class FlagDB(object):
         """Return all flags with status new and pending
         for submission."""
         try:
-            return self.col.find({
+            return self.col_flags.find({
                 '$or': [{'state': 'NEW'},
                         {'state': 'PENDING'}]},
                 limit=limit)
@@ -75,7 +75,7 @@ class FlagDB(object):
         """Submission of flag was successful, set flag
         as SUBMITTED."""
         try:
-            return await self.col.update(
+            return await self.col_flags.update(
                 {'flag': flag},
                 {'$set': {
                     'state': 'SUBMITTED',
@@ -88,7 +88,7 @@ class FlagDB(object):
         accepted, set them as PENDING in order to retry
         submission."""
         try:
-            return await self.col.update(
+            return await self.col_flags.update(
                 {'flag': flag},
                 {'$set': {'state': 'PENDING'}})
         except Exception as e:
@@ -98,7 +98,7 @@ class FlagDB(object):
         """Flags that are EXPIRED, set them as expired,
         do not try to submit them again."""
         try:
-            return await self.col.update(
+            return await self.col_flags.update(
                 {'flag': flag},
                 {'$set': {'state': 'EXPIRED'}})
         except Exception as e:
@@ -109,7 +109,7 @@ class FlagDB(object):
         reason, most likely they are invalid. Mark them as
         FAILED."""
         try:
-            return await self.col.update(
+            return await self.col_flags.update(
                 {'flag': flag},
                 {'$set': {'state': 'FAILED'}})
         except Exception as e:
@@ -165,12 +165,12 @@ class FlagDB(object):
         flags, count of successful or failed submissions and such."""
         try:
             stats = dict()
-            stats['totalFlags'] = await self.col.count()
-            stats['newCount'] = await self.col.count({'state': 'NEW'})
-            stats['submittedCount'] = await self.col.count({'state': 'SUBMITTED'})
-            stats['expiredCount'] = await self.col.count({'state': 'EXPIRED'})
-            stats['failedCount'] = await self.col.count({'state': 'FAILED'})
-            stats['pendingCount'] = await self.col.count({'state': 'PENDING'})
+            stats['totalFlags'] = await self.col_flags.count()
+            stats['newCount'] = await self.col_flags.count({'state': 'NEW'})
+            stats['submittedCount'] = await self.col_flags.count({'state': 'SUBMITTED'})
+            stats['expiredCount'] = await self.col_flags.count({'state': 'EXPIRED'})
+            stats['failedCount'] = await self.col_flags.count({'state': 'FAILED'})
+            stats['pendingCount'] = await self.col_flags.count({'state': 'PENDING'})
             return stats
         except Exception as e:
             self.log.debug(e)
