@@ -7,7 +7,7 @@ from helperlib.logging import scope_logger, default_config, load_config
 from twisted.internet import reactor, protocol, defer
 from twisted.internet.task import LoopingCall
 
-from flagservice.statistics import Statistics
+from ctfpwn.flagservice.statistics import Statistics
 from .receiver import FlagReceiverProtocol
 from .shared import flag_db, LOG_LEVEL_STAT
 from .submitter import FlagSubmissionFactory

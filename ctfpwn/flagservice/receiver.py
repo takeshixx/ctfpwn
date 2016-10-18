@@ -5,11 +5,12 @@ This may be obsolete because the exploit supervisor pushes flags directly
 to the database. However, it could still run for testing purposes during
 exploit development."""
 import re
-from twisted.internet import protocol
-from helperlib.logging import scope_logger
 
+from helperlib.logging import scope_logger
+from twisted.internet import protocol
+
+from ctfpwn.flagservice import Flag
 from .shared import flag_db
-from flagservice.flag import Flag
 
 # Flag regex
 # Input format example: 'smartgrid|10.23.103.2|JAJAJAJAJAJAJAJAJAJAJAJAJAJAJAA=|1446295211'
