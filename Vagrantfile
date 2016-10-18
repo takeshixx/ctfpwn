@@ -89,8 +89,8 @@ khAVpAAkXPwR5y/3NY7uAAAADXRha2VzaGl4QFdPUFI=
     chmod 400 /home/ubuntu/.ssh/id_ed25519
     su ubuntu -c "echo -e 'Host github.com\n\tStrictHostKeyChecking no\n' >> /home/ubuntu/.ssh/config"
     su ubuntu -c "git clone git@github.com:takeshixx/ctf-pwn.git \
-        --branch dev-takeshix/asyncio --single-branch /srv/ctf/ctf-pwn"
+        --branch master --single-branch /srv/ctf/ctf-pwn"
     su ubuntu -c "/srv/ctf/env/bin/pip install -r /srv/ctf/ctf-pwn/requirements.txt"
-    cp -r /srv/ctf/ctf-pwn/*.service /etc/systemd/system
+    cp -r /srv/ctf/ctf-pwn/{exploitservice.service,flagservice.service} /etc/systemd/system
   SHELL
 end
