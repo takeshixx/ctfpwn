@@ -69,7 +69,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
     apt-get upgrade -y
-    apt-get install -y python3-pip mongodb supervisor
+    apt-get install -y python3-pip mongodb
     systemctl enable mongodb
     systemctl start mongodb
     pip3 install --upgrade pip
@@ -91,7 +91,6 @@ khAVpAAkXPwR5y/3NY7uAAAADXRha2VzaGl4QFdPUFI=
     su ubuntu -c "git clone git@github.com:takeshixx/ctf-pwn.git \
         --branch dev-takeshix/asyncio --single-branch /srv/ctf/ctf-pwn"
     su ubuntu -c "/srv/ctf/env/bin/pip install -r /srv/ctf/ctf-pwn/requirements.txt"
-    cp -r /srv/ctf/ctf-pwn/supervisor/* /etc/supervisor
-    service supervisor restart
+    cp -r /srv/ctf/ctf-pwn/*.service /etc/systemd/system
   SHELL
 end
