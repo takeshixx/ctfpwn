@@ -52,7 +52,7 @@ class FlagDB(object):
         except Exception as e:
             self.log.debug(e)
 
-    async def select_flags(self, limit=0):
+    def select_flags(self, limit=0):
         """Return <limit> flags from database. Defaults
         to all documents."""
         try:
@@ -60,7 +60,7 @@ class FlagDB(object):
         except Exception as e:
             self.log.debug(e)
 
-    async def select_new_and_pending(self, limit=100):
+    def select_new_and_pending(self, limit=100):
         """Return all flags with status new and pending
         for submission."""
         try:
@@ -152,7 +152,7 @@ class FlagDB(object):
         except Exception as e:
             self.log.debug(e)
 
-    async def select_services(self, limit=0):
+    def select_services(self, limit=0):
         """Return <limit> services from database. Defaults
         to all services."""
         try:

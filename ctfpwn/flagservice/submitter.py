@@ -28,7 +28,7 @@ GAME_SERVER_MSG_TOO_MUCH = b'too much'
 GAME_SERVER_MSG_ALREADY_SUBMITTED = b'already submitted'
 
 
-async def submitter(loop, db):
+async def submitter(db, loop):
     """Flag submission job, runs every SERVICE_SUBMIT_INTERVAL
     seconds."""
     log.debug('Called subbmiter')
