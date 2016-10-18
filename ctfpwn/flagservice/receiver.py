@@ -5,13 +5,17 @@ This may be obsolete because the exploit supervisor pushes flags directly
 to the database. However, it could still run for testing purposes during
 exploit development."""
 import re
+import asyncio
+import logging
+import codecs
 
 from helperlib.logging import scope_logger
-from twisted.internet import protocol
 
-from ctfpwn.flagservice import Flag
-from .shared import flag_db
+from ctfpwn import Flag
 
+log = logging.getLogger(__name__)
+
+# TODO: move to config file
 # Flag regex
 # Input format example: 'smartgrid|10.23.103.2|JAJAJAJAJAJAJAJAJAJAJAJAJAJAJAA=|1446295211'
 REGEX_FLAG = r"(\w{31}=)"
@@ -25,32 +29,30 @@ REGEX_INPUT = '^{}\|{}\|{}\|{}$'.format(
     REGEX_TIMESTAMP
 ).encode()
 
-input_validation = re.compile(REGEX_INPUT)
+VALIDATE = re.compile(REGEX_INPUT)
 
 
 @scope_logger
-class FlagReceiverProtocol(protocol.Protocol):
-    """
-    Protocol factory for flag submission.
-    """
-    def dataReceived(self, incoming):
-        """
-        Instance function that actually handles incoming data. If lines math
-        REGEX_INPUT, it will be inserted into the database.
-        """
-        try:
-            lines = incoming.split(b'\n')
-            for line in lines:
-                if not line:
-                    continue
-                line = line.strip()
-                if input_validation.findall(line):
-                    flagdata = line.strip().decode('utf-8', errors='replace').split('|')
-                    flag = Flag(flagdata[0], flagdata[1], flagdata[2])
-                    flag_db.insert_new(flag)
-                    self.transport.write(b'received\n')
-                else:
-                    self.transport.write(b'bogus format!\n')
-                    self.log.debug('False submission by %s', self.transport.getPeer())
-        except Exception as e:
-            self.log.warning('Error in dataReceive() function! [EXCEPTION: %s]', e)
+class FlagReceiverProtocol(asyncio.Protocol):
+    def __init__(self, db):
+        super(FlagReceiverProtocol, self).__init__()
+        self.db = db
+
+    def connection_made(self, transport):
+        self.transport = transport
+        self.peername = transport.get_extra_info('peername')
+
+    def data_received(self, data):
+        for line in data.split(b'\n'):
+            if not VALIDATE.findall(line):
+                self._writeline('Bogus format!')
+                log.debug('Erroneous flag submission by: ' + self.peername)
+                continue
+            flag = Flag(*line.strip().split(b'|'))
+            self.db.insert_new(flag)
+            self._writeline('Accepted')
+
+    def _writeline(self, data):
+        if isinstance(data, str):
+            data = codecs.encode(data)
+        self.transport.write(data + b'\n')

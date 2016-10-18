@@ -1,211 +1,177 @@
 """This module provides an interface to the database and
 anything that is needed to handle flags."""
+#import asyncio
 import logging
 import time
+import motor.motor_asyncio
+import pymongo
 
-import txmongo
-import txmongo.connection
-import txmongo.filter
 from helperlib.logging import scope_logger
-from twisted.internet import defer
 
+# TODO: move to config file
 SERVICE_MONGO_POOLSIZE = 100
 log = logging.getLogger(__name__)
 
 
 @scope_logger
-class FlagDB():
-    """
-    An interface to the database.
-    """
+class FlagDB(object):
+    """An interface to the database."""
     def __init__(self):
         try:
-            self.mongo = txmongo.lazyMongoConnectionPool(pool_size=SERVICE_MONGO_POOLSIZE)
+            self.mongo = motor.motor_asyncio.AsyncIOMotorClient()
             self.db = self.mongo.flagservice
             self.col = self.db.flags
             self.col_services = self.db.services
-            self.setup_database_indexes()
         except Exception as e:
-            self.log.exception('Error in FlagDB().__init__() [EXCEPTION %s]', e)
+            self.log.exception(e)
 
-    @defer.inlineCallbacks
-    def setup_database_indexes(self):
+    @classmethod
+    async def create(cls):
+        obj = cls()
+        await obj.setup_database_indexes()
+        return obj
+
+    async def setup_database_indexes(self):
         """Speed up find queries by creating indexes."""
-        yield self.col.create_index(txmongo.filter.sort(txmongo.filter.ASCENDING('flag')))
-        yield self.col.create_index(txmongo.filter.sort(txmongo.filter.ASCENDING('state')))
+        await self.col_flags.create_index([('flag', pymongo.ASCENDING)])
+        await self.col_flags.create_index([('state', pymongo.ASCENDING)])
 
-    @defer.inlineCallbacks
-    def insert_new(self, flag):
-        """Insert a new flag if it does not already exist, set status to NEW."""
+    async def insert_new(self, flag):
+        """Insert a new flag if it does not already exist,
+        set status to NEW."""
         try:
-            yield self.col.update_one(
+            return await self.col.update_one(
                 {'flag': flag.flag},
                 {'$setOnInsert':
-                    {
-                        'service': flag.service,
-                        'target': flag.target,
-                        'flag': flag.flag,
-                        'state': 'NEW',
-                        'comment': '',
-                        'timestamp': int(time.time()),
-                        'submitted': 0
-                    }
-                },
-                upsert=True
-            )
+                    {'service': flag.service,
+                     'target': flag.target,
+                     'flag': flag.flag,
+                     'state': 'NEW',
+                     'comment': '',
+                     'timestamp': int(time.time()),
+                     'submitted': 0}}, upsert=True)
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def select_flags(self, limit=0):
-        """Return <limit> flags from database. Defaults to all documents."""
+    async def select_flags(self, limit=0):
+        """Return <limit> flags from database. Defaults
+        to all documents."""
         try:
-            docs = yield self.col.find(limit=limit)
-            defer.returnValue(docs)
+            return self.col.find(limit=limit)
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def select_new_and_pending(self, limit=100):
-        """Return all flags with status new and pending for submission."""
+    async def select_new_and_pending(self, limit=100):
+        """Return all flags with status new and pending
+        for submission."""
         try:
-            flags = yield self.col.find({
-                '$or': [
-                    {'state': 'NEW'},
-                    {'state': 'PENDING'}
-                ]},
-                limit=limit
-            )
-            defer.returnValue(flags)
+            return self.col.find({
+                '$or': [{'state': 'NEW'},
+                        {'state': 'PENDING'}]},
+                limit=limit)
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def update_submitted(self, flag):
-        """Submission of flag was successful, set flag as SUBMITTED."""
+    async def update_submitted(self, flag):
+        """Submission of flag was successful, set flag
+        as SUBMITTED."""
         try:
-            yield self.col.update(
+            return await self.col.update(
                 {'flag': flag},
                 {'$set': {
                     'state': 'SUBMITTED',
-                    'submitted': int(time.time())
-                }}
-            )
+                    'submitted': int(time.time())}})
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def update_pending(self, flag):
-        """Flags that have been submitted but were not accepted, set them as PENDING
-        in order to retry submission."""
+    async def update_pending(self, flag):
+        """Flags that have been submitted but were not
+        accepted, set them as PENDING in order to retry
+        submission."""
         try:
-            yield self.col.update(
+            return await self.col.update(
                 {'flag': flag},
-                {'$set': {
-                    'state': 'PENDING'
-                }}
-            )
+                {'$set': {'state': 'PENDING'}})
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def update_expired(self, flag):
-        """Flags that are EXPIRED, set them as expired, do not try to submit them again."""
+    async def update_expired(self, flag):
+        """Flags that are EXPIRED, set them as expired,
+        do not try to submit them again."""
         try:
-            yield self.col.update(
+            return await self.col.update(
                 {'flag': flag},
-                {'$set': {
-                    'state': 'EXPIRED'
-                }}
-            )
+                {'$set': {'state': 'EXPIRED'}})
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def update_failed(self, flag):
-        """Flags that could not be submitted for whatever reason, most likely they are invalid.
-        Mark them as FAILED."""
+    async def update_failed(self, flag):
+        """Flags that could not be submitted for whatever
+        reason, most likely they are invalid. Mark them as
+        FAILED."""
         try:
-            yield self.col.update(
+            return await self.col.update(
                 {'flag': flag},
-                {'$set': {
-                    'state': 'FAILED'
-                }}
-            )
+                {'$set': {'state': 'FAILED'}})
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def insert_service(self, service):
+    async def insert_service(self, service):
         """Insert a new service if it does not yet exist."""
         try:
-            yield self.col_services.update_one(
+            return await self.col_services.update_one(
                 {'name': service.name},
                 {'$setOnInsert':
-                    {
-                        'name': service.name,
-                        'host': service.host,
-                        'port': service.port,
-                        'state': service.state,
-                        'changed': int(time.time()),
-                        'comment': service.comment,
-                        'timestamp': int(time.time())
-                    }
-                },
-                upsert=True
-            )
+                    {'name': service.name,
+                     'host': service.host,
+                     'port': service.port,
+                     'state': service.state,
+                     'changed': int(time.time()),
+                     'comment': service.comment,
+                     'timestamp': int(time.time())
+                }}, upsert=True)
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def update_service_up(self, service):
+    async def update_service_up(self, service):
         """Update a service, set state to UP."""
         try:
-            yield self.col_services.update(
+            return await self.col_services.update(
                 {'name': service.name},
-                {'$set': {
-                    'state': 'UP',
-                    'changed': int(time.time())
-                }}
-            )
+                {'$set': {'state': 'UP',
+                          'changed': int(time.time())}})
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def update_service_down(self, service):
+    async def update_service_down(self, service):
         """Update a service, set state to DOWN."""
         try:
-            yield self.col_services.update(
+            return self.col_services.update(
                 {'name': service.name},
-                {'$set': {
-                    'state': 'DOWN',
-                    'changed': int(time.time())
-                }}
-            )
+                {'$set': {'state': 'DOWN',
+                          'changed': int(time.time())}})
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def select_services(self, limit=0):
-        """Return <limit> services from database. Defaults to all services."""
+    async def select_services(self, limit=0):
+        """Return <limit> services from database. Defaults
+        to all services."""
         try:
-            services = yield self.col_services.find(limit=limit)
-            defer.returnValue(services)
+            return self.col_services.find(limit=limit)
         except Exception as e:
             self.log.debug(e)
 
-    @defer.inlineCallbacks
-    def stats(self):
-        """Return some stats of the database, like total flags, count of successful or
-        failed submissions and such."""
+    async def stats(self):
+        """Return some stats of the database, like total
+        flags, count of successful or failed submissions and such."""
         try:
             stats = dict()
-            stats['totalFlags'] = yield self.col.count()
-            stats['newCount'] = yield self.col.count({'state': 'NEW'})
-            stats['submittedCount'] = yield self.col.count({'state': 'SUBMITTED'})
-            stats['expiredCount'] = yield self.col.count({'state': 'EXPIRED'})
-            stats['failedCount'] = yield self.col.count({'state': 'FAILED'})
-            stats['pendingCount'] = yield self.col.count({'state': 'PENDING'})
+            stats['totalFlags'] = await self.col.count()
+            stats['newCount'] = await self.col.count({'state': 'NEW'})
+            stats['submittedCount'] = await self.col.count({'state': 'SUBMITTED'})
+            stats['expiredCount'] = await self.col.count({'state': 'EXPIRED'})
+            stats['failedCount'] = await self.col.count({'state': 'FAILED'})
+            stats['pendingCount'] = await self.col.count({'state': 'PENDING'})
             defer.returnValue(stats)
         except Exception as e:
             self.log.debug(e)
