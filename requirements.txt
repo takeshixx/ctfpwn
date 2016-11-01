@@ -1,4 +1,3 @@
 motor
-ipaddress
 https://github.com/bluec0re/python-helperlib/archive/master.zip
-Twisted
+python-libnmap
