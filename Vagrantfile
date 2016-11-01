@@ -69,7 +69,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
     apt-get upgrade -y
-    apt-get install -y python3-pip mongodb
+    apt-get install -y python3-pip mongodb nmap
     systemctl enable mongodb
     systemctl start mongodb
     pip3 install --upgrade pip
@@ -89,7 +89,7 @@ khAVpAAkXPwR5y/3NY7uAAAADXRha2VzaGl4QFdPUFI=
     chmod 400 /home/ubuntu/.ssh/id_ed25519
     su ubuntu -c "echo -e 'Host github.com\n\tStrictHostKeyChecking no\n' >> /home/ubuntu/.ssh/config"
     su ubuntu -c "git clone git@github.com:takeshixx/ctf-pwn.git \
-        --branch master --single-branch /srv/ctf/ctf-pwn"
+        --branch dev-takeshix/asyncio --single-branch /srv/ctf/ctf-pwn"
     su ubuntu -c "/srv/ctf/env/bin/pip install -r /srv/ctf/ctf-pwn/requirements.txt"
     cp -r /srv/ctf/ctf-pwn/{exploitservice.service,flagservice.service} /etc/systemd/system
   SHELL
