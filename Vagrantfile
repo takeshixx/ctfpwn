@@ -68,29 +68,16 @@ Vagrant.configure("2") do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
-    apt-get upgrade -y
     apt-get install -y python3-pip mongodb nmap
     systemctl enable mongodb
     systemctl start mongodb
     pip3 install --upgrade pip
-    pip3 install virtualenv
-    mkdir -p /srv/ctf/logs
+    pip3 install virtualenv mongo-connector elastic2-doc-manager
+    mkdir -p /srv/ctf/{ctf-pwn,logs}
     chown -R ubuntu:ubuntu /srv/ctf
     su ubuntu -c "virtualenv /srv/ctf/env"
-    echo "-----BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-QyNTUxOQAAACCYcfv0TVKe3gmG1pDZ+00gwJIQFaQAJFz8Eecv9zWO7gAAAJBYEBZMWBAW
-TAAAAAtzc2gtZWQyNTUxOQAAACCYcfv0TVKe3gmG1pDZ+00gwJIQFaQAJFz8Eecv9zWO7g
-AAAEBkLzbDGgLKI3X8DOtVqpC0m3V+qHwh7mW8/RXZr60wqphx+/RNUp7eCYbWkNn7TSDA
-khAVpAAkXPwR5y/3NY7uAAAADXRha2VzaGl4QFdPUFI=
------END OPENSSH PRIVATE KEY-----
-" > /home/ubuntu/.ssh/id_ed25519
-    chown -R ubuntu:ubuntu /home/ubuntu/.ssh
-    chmod 400 /home/ubuntu/.ssh/id_ed25519
-    su ubuntu -c "echo -e 'Host github.com\n\tStrictHostKeyChecking no\n' >> /home/ubuntu/.ssh/config"
-    su ubuntu -c "git clone git@github.com:takeshixx/ctf-pwn.git \
-        --branch dev-takeshix/asyncio --single-branch /srv/ctf/ctf-pwn"
+    su ubuntu -c "cp -r /vagrant/{ctfpwn,run-*.py,requirements.txt} /srv/ctf/ctf-pwn"
     su ubuntu -c "/srv/ctf/env/bin/pip install -r /srv/ctf/ctf-pwn/requirements.txt"
-    cp -r /srv/ctf/ctf-pwn/{exploitservice.service,flagservice.service} /etc/systemd/system
+    cp -r /vagrant/*.service /etc/systemd/system
   SHELL
 end
