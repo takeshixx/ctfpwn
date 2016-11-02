@@ -1,0 +1,10 @@
+[Unit]
+Description=CTF-PWN API
+
+[Service]
+Restart=always
+User=ubuntu
+ExecStart=/srv/ctf/env/bin/python /srv/ctf/ctf-pwn/run-api.py
+
+[Install]
+WantedBy=default.target
