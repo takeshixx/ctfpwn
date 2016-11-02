@@ -1,0 +1,10 @@
+[Unit]
+Description=Target Service
+
+[Service]
+Restart=always
+User=ubuntu
+ExecStart=/srv/ctf/env/bin/python /srv/ctf/ctf-pwn/run-targetservice.py
+
+[Install]
+WantedBy=default.target
