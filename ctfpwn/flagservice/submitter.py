@@ -33,7 +33,7 @@ async def submitter(db, loop):
     seconds."""
     log.debug('Called subbmiter')
     t0 = time.time()
-    flags = await db.select_new_and_pending(limit=MAX_FLAG_SUBMITS)
+    flags = await db.select_new_and_pending_flags(limit=MAX_FLAG_SUBMITS)
     if flags:
         log.info('[SUBMIT] [COUNT %d]', len(flags))
         loop.create_connection(lambda: FlagSubmissionProtocol(flags, db),

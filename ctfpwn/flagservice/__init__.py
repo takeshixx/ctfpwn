@@ -5,8 +5,8 @@ import logging
 
 from helperlib.logging import default_config, load_config
 
+from ctfpwn.db import CtfDb
 from ctfpwn.flagservice.receiver import FlagReceiverProtocol
-from ctfpwn.flagservice.flagdb import FlagDB
 from ctfpwn.flagservice.submitter import submitter
 
 log = logging.getLogger(__name__)
@@ -25,15 +25,15 @@ CTF_ROUND_DURATION = 120
 
 async def stats(db):
     while True:
-        await db.stats()
+        await db.flag_stats()
         await asyncio.sleep(SERVICE_STATS_INTERVAL)
 
 async def init(loop):
-    flagdb = await FlagDB.create()
+    db = await CtfDb.create()
     # Print stats every SERVICE_STATS_INTERVAL seconds.
-    loop.create_task(stats(flagdb))
-    loop.create_task(submitter(flagdb, loop))
-    receiver = loop.create_server(lambda: FlagReceiverProtocol(flagdb), SERVICE_ADDR, SERVICE_PORT)
+    loop.create_task(stats(db))
+    loop.create_task(submitter(db, loop))
+    receiver = loop.create_server(lambda: FlagReceiverProtocol(db), SERVICE_ADDR, SERVICE_PORT)
     loop.create_task(receiver)
 
 def run_flagservice():
