@@ -2,3 +2,4 @@ motor
 https://github.com/bluec0re/python-helperlib/archive/master.zip
 python-libnmap
 aiohttp
+PyYAML

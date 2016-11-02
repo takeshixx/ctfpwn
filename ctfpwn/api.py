@@ -1,9 +1,8 @@
+import asyncio
 import os.path
 import aiohttp.web
 
 from ctfpwn.db import CtfDb
-
-db = CtfDb()
 
 
 def remove_objectid(ilist):
@@ -86,9 +85,22 @@ def create_app():
     return app
 
 
-def run_api():
+async def database():
+    global db
+    db = await CtfDb.create()
+
+
+def run_api(config=None):
+    if config:
+        host = config['api_listening_host']
+        port = config['api_listening_port']
+    else:
+        host = '127.0.0.1'
+        port = 8080
+    loop = asyncio.get_event_loop()
+    loop.create_task(database())
     app = create_app()
-    aiohttp.web.run_app(app, host='127.0.0.1')
+    aiohttp.web.run_app(app, host=host, port=port)
 
 
 if __name__ == '__main__':

@@ -1,8 +1,7 @@
 """This module provides an interface to the database and
-anything that is needed to handle exploits."""
+anything that is needed to handle exploits, flags and targets."""
 import time
 import logging
-# import asyncio
 import motor.motor_asyncio
 import pymongo
 from helperlib.logging import scope_logger
@@ -12,19 +11,23 @@ log = logging.getLogger(__name__)
 LOG_LEVEL_STAT = logging.INFO + 1
 logging.addLevelName(LOG_LEVEL_STAT, 'STATISTIC')
 
-# Maximum amount of simultaneous connections to the database
-SERVICE_MONGO_POOLSIZE = 100
-
 
 @scope_logger
 class CtfDb():
     """An interface to the database. It provides methods
     to add/remove exploits and exploit runs and also for
     storing new flags in the database."""
-    def __init__(self):
+    def __init__(self, config=None):
+        self.config = config
+        if not self.config:
+            host = '127.0.0.1'
+            port = 27017
+        else:
+            host = self.config['database']['host']
+            port = self.config['database']['port']
         try:
             # TODO: one time connect instead of every instance?
-            self.mongo = motor.motor_asyncio.AsyncIOMotorClient()
+            self.mongo = motor.motor_asyncio.AsyncIOMotorClient(host, port)
             self.exploitdb = self.mongo.exploitservice
             self.col_expl = self.exploitdb.exploits
             self.col_runs = self.exploitdb.runs
@@ -33,11 +36,11 @@ class CtfDb():
             self.col_flags = self.flagdb.flags
             self.col_services = self.flagdb.services
         except Exception as e:
-            self.log.error('Error in ExploitDB().__init__() [EXCEPTION %s]', str(e))
+            self.log.exception(e)
 
     @classmethod
-    async def create(cls):
-        obj = cls()
+    async def create(cls, config=None):
+        obj = cls(config)
         await obj.setup_database_indexes()
         return obj
 
@@ -60,35 +63,35 @@ class CtfDb():
                      'timestamp': int(time.time()),
                      'submitted': 0}}, upsert=True)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def select_exploits(self, limit=0):
         try:
             cursor = self.col_expl.find(limit=limit)
             return await cursor.to_list(None)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def select_exploits_enabled(self):
         try:
             cursor = self.col_expl.find({'enabled': True})
             return await cursor.to_list(None)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def select_exploit_services(self, limit=0):
         try:
             cursor = self.col_expl.distinct('port')
             return await cursor.to_list(None)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def select_alive_targets(self):
         try:
             cursor = self.col_targets.find({'alive': True})
             return await cursor.to_list(None)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def update_target(self, target, alive):
         try:
@@ -116,7 +119,7 @@ class CtfDb():
                               'port': port,
                               'enabled': enabled}}, upsert=True)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def insert_run(self, service, exploit, target, port, state, started, finished):
         try:
@@ -129,7 +132,7 @@ class CtfDb():
                 'started': started,
                 'finished': finished})
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def select_flags(self, limit=0):
         """Return <limit> flags from database. Defaults
@@ -138,7 +141,7 @@ class CtfDb():
             cursor = self.col_flags.find(limit=limit)
             return await cursor.to_list(None)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def select_new_and_pending_flags(self, limit=100):
         """Return all flags with status new and pending
@@ -149,7 +152,7 @@ class CtfDb():
                                 {'state': 'PENDING'}]}, limit=limit)
             return await cursor.to_list(None)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def update_submitted(self, flag):
         """Submission of flag was successful, set flag
@@ -161,7 +164,7 @@ class CtfDb():
                         'state': 'SUBMITTED',
                         'submitted': int(time.time())}})
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def update_pending(self, flag):
         """Flags that have been submitted but were not
@@ -172,7 +175,7 @@ class CtfDb():
                     {'flag': flag},
                     {'$set': {'state': 'PENDING'}})
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def update_expired(self, flag):
         """Flags that are EXPIRED, set them as expired,
@@ -182,7 +185,7 @@ class CtfDb():
                     {'flag': flag},
                     {'$set': {'state': 'EXPIRED'}})
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def update_failed(self, flag):
         """Flags that could not be submitted for whatever
@@ -193,7 +196,7 @@ class CtfDb():
                     {'flag': flag},
                     {'$set': {'state': 'FAILED'}})
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def insert_service(self, service):
         """Insert a new service if it does not yet exist."""
@@ -210,7 +213,7 @@ class CtfDb():
                          'timestamp': int(time.time())
                     }}, upsert=True)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def update_service_up(self, service):
         """Update a service, set state to UP."""
@@ -220,7 +223,7 @@ class CtfDb():
                     {'$set': {'state': 'UP',
                               'changed': int(time.time())}})
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def update_service_down(self, service):
         """Update a service, set state to DOWN."""
@@ -230,7 +233,7 @@ class CtfDb():
                     {'$set': {'state': 'DOWN',
                               'changed': int(time.time())}})
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def select_services(self, limit=0):
         """Return <limit> services from database. Defaults
@@ -239,7 +242,7 @@ class CtfDb():
             cursor = self.col_services.find(limit=limit)
             return await cursor.to_list(None)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def exploit_stats(self):
         """Print available exploit, just for test purposes."""
@@ -253,19 +256,19 @@ class CtfDb():
             targets = len(targets)
             self.log.log(LOG_LEVEL_STAT, '[TARGETS] [ALIVE %d]', targets)
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)
 
     async def flag_stats(self):
         """Return some stats of the database, like total
         flags, count of successful or failed submissions and such."""
         try:
             stats = dict()
-            stats['totalFlags'] = await self.col_flags.count()
-            stats['newCount'] = await self.col_flags.count({'state': 'NEW'})
-            stats['submittedCount'] = await self.col_flags.count({'state': 'SUBMITTED'})
-            stats['expiredCount'] = await self.col_flags.count({'state': 'EXPIRED'})
-            stats['failedCount'] = await self.col_flags.count({'state': 'FAILED'})
-            stats['pendingCount'] = await self.col_flags.count({'state': 'PENDING'})
+            stats['totalFlags'] = await self.col_flags.find().count()
+            stats['newCount'] = await self.col_flags.find({'state': 'NEW'}).count()
+            stats['submittedCount'] = await self.col_flags.find({'state': 'SUBMITTED'}).count()
+            stats['expiredCount'] = await self.col_flags.find({'state': 'EXPIRED'}).count()
+            stats['failedCount'] = await self.col_flags.find({'state': 'FAILED'}).count()
+            stats['pendingCount'] = await self.col_flags.find({'state': 'PENDING'}).count()
             return stats
         except Exception as e:
-            self.log.debug(e)
+            self.log.exception(e)

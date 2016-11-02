@@ -1,7 +1,9 @@
 import time
+import yaml
+import os.path
 
 
-class Flag:
+class Flag(object):
     """A class that represents flags, as parsed
     from incoming lines. See REGEX_INPUT and the
     corresponding input format example."""
@@ -12,7 +14,7 @@ class Flag:
         self.timestamp = int(time.time())
 
 
-class Target():
+class Target(object):
     """An instance represents a single target system.
     t should provide information if the host is
     alive (pingable) and which service ports are open."""
@@ -20,3 +22,15 @@ class Target():
         self.host = host
         self.is_alive = False
         self.services_alive = list()
+
+
+def load_ctf_config(path):
+    if not os.path.isfile(path):
+        path = 'config.yaml'
+    path = open(path, 'r')
+    try:
+        conf = yaml.load(path.read())
+    except yaml.YAMLError as e:
+        print(e)
+        return
+    return conf

@@ -1,0 +1,64 @@
+# General
+database:
+  host: '127.0.0.1'
+  port: 27017
+
+ctf_network: '10.60.1.0/23'
+ctf_own_box: '10.60.42.2'
+
+# A CTF round will be ~2min
+ctf_tick: 120
+
+# Check alive hosts every x minutes
+ctf_target_alive_interval: 180
+
+# Global instance to grep for flags, e.g.JAJAJAJAJAJAJAJAJAJAJAJAJAJAJAA=
+ctf_flag_grep: '(\w{31}=)'
+
+# Maximum amount of concurrent running exploits.
+max_concurrent_worksers: 2048
+
+# Start of the CTF (November 21, 2015 at 10:00 UTC)
+game_start: 1448100000
+
+# The time when the network should be open (1hour after CTF has started)
+network_open: game_start + 60 * 60
+
+# If an exploit is still running after x seconds, kill it with fire!
+kill_exploit_after: 120
+
+supervisor_clean_workers_interval: 120
+
+# Exploit Service
+exploit_stats_interval: 8
+exploit_supervisor_interval: 25
+
+# Flag Service
+flag_submission_interval: 12
+flag_stats_interval: 5
+flag_service_host: '127.0.0.1'
+flag_service_port: 8081
+gameserver_host: '127.0.0.1'
+gameserver_port: 9000
+# How many flags should be submitted at the same time at max.
+flag_max_submits: 1000
+# Messages by the gameserver, need to be adjusted
+game_server_msg_success: b'accepted'
+game_server_msg_success2: b'congratulations'
+game_server_msg_expired: b'expired'
+game_server_msg_service_down: b'corresponding'
+game_server_msg_invalid: b'no such flag'
+game_server_msg_own_flag: b'own flag'
+game_server_msg_too_much: b'too much'
+game_server_msg_already_submitted: b'already submitted'
+
+# Target Service
+discovery_interval: 45
+service_interval: 15
+discovery_ports: [22, 80, 8080]
+service_ports: [22, 80, 8080]
+
+
+# API
+api_listening_host: '127.0.0.1'
+api_listening_port: 8080

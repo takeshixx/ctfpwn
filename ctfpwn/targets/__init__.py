@@ -2,12 +2,11 @@
 import logging
 import sys
 import asyncio
-import signal
 
 from helperlib.logging import default_config, load_config
 
-#from ctfpwn.exploitservice.exploitdb import ExploitDB
 from ctfpwn.db import CtfDb
+from ctfpwn.shared import load_ctf_config
 from ctfpwn.targets.supervisor import TargetSupervisor
 
 log = logging.getLogger(__name__)
@@ -21,25 +20,25 @@ SERVICE_PORTS = [80, 9090]
 CTF_NETWORK = '172.23.11.0/24'
 
 
-async def _start():
-    db = await CtfDb.create()
+async def _start(config):
+    db = await CtfDb.create(config=config)
     supervisor = TargetSupervisor(db,
-                                  networks=CTF_NETWORK,
-                                  discover_ports=DISCOVER_PORTS,
-                                  service_ports=SERVICE_PORTS)
-    supervisor.start(DISCOVERY_INTERVAL, SERVICE_INTERVAL)
+                                  networks=config.get('ctf_network'),
+                                  discover_ports=config.get('discovery_ports'),
+                                  service_ports=config.get('service_ports'))
+    supervisor.start(config.get('discovery_interval'), config.get('service_interval'))
 
-def run_targetservice():
+def run_targetservice(config):
     try:
         load_config('targetservice.ini', disable_existing_loggers=False)
     except Exception as e:
         default_config(level=logging.DEBUG, disable_existing_loggers=False)
         log.warning('No logging config file targetservice.ini found. Using default')
 
+    config = load_ctf_config(config)
     log.info('Starting Target Service')
     loop = asyncio.get_event_loop()
-    loop.create_task(_start())
-    # loop.add_signal_handler(signal.SIGINT, loop.stop)
+    loop.create_task(_start(config))
     try:
         loop.run_forever()
     except KeyboardInterrupt:

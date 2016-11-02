@@ -11,34 +11,19 @@ log = logging.getLogger(__name__)
 LOG_LEVEL_STAT = logging.INFO + 1
 logging.addLevelName(LOG_LEVEL_STAT, 'STATISTIC')
 
-# TODO: move to config file
-# Gameserver settings
-GAMESERVER_ADDR = '127.0.0.1'
-GAMESERVER_PORT = 9000
-# How many flags should be submitted at the same time at max.
-MAX_FLAG_SUBMITS = 1000
-# Messages by the gameserver, need to be adjusted
-GAME_SERVER_MSG_SUCCESS = b'accepted'
-GAME_SERVER_MSG_SUCCESS2 = b'congratulations'
-GAME_SERVER_MSG_EXPIRED = b'expired'
-GAME_SERVER_MSG_SERVICE_DOWN = b'corresponding'
-GAME_SERVER_MSG_INVALID = b'no such flag'
-GAME_SERVER_MSG_OWN_FLAG = b'own flag'
-GAME_SERVER_MSG_TOO_MUCH = b'too much'
-GAME_SERVER_MSG_ALREADY_SUBMITTED = b'already submitted'
 
-
-async def submitter(db, loop):
+async def submitter(db, config):
     """Flag submission job, runs every SERVICE_SUBMIT_INTERVAL
     seconds."""
-    log.debug('Called subbmiter')
+    log.debug('Called submitter')
+    loop = asyncio.get_event_loop()
     t0 = time.time()
-    flags = await db.select_new_and_pending_flags(limit=MAX_FLAG_SUBMITS)
+    flags = await db.select_new_and_pending_flags(limit=config.get('flag_max_submits'))
     if flags:
         log.info('[SUBMIT] [COUNT %d]', len(flags))
-        loop.create_connection(lambda: FlagSubmissionProtocol(flags, db),
-                               GAMESERVER_ADDR,
-                               GAMESERVER_PORT)
+        loop.create_connection(lambda: FlagSubmissionProtocol(flags, db, config),
+                               config.get('gameserver_host'),
+                               config.get('gameserver_port'))
     else:
         log.info('[SUBMIT] No NEW/PENDING flags for submission...')
     log.debug('Finished submitter(), took %f', time.time() - t0)
@@ -48,9 +33,10 @@ async def submitter(db, loop):
 class FlagSubmissionProtocol(asyncio.Protocol):
     """An interface to the gameserver for submitting flags.
     Every instance may submit one or more flags at once."""
-    def __init__(self, flags, flag_db, timeout=5):
+    def __init__(self, flags, flag_db, config, timeout=5):
         self.flags = flags
         self.db = flag_db
+        self.config = config
         self.current_flag = None
         self.flags_success = list()
         self.flags_failed = list()
@@ -70,25 +56,25 @@ class FlagSubmissionProtocol(asyncio.Protocol):
             self.connection_timeout, self.timeout)
 
     def data_received(self, incoming):
-        if GAME_SERVER_MSG_SUCCESS in incoming or GAME_SERVER_MSG_SUCCESS2 in incoming:
+        if self.config.get('game_server_msg_success') in incoming or self.config.get('game_server_msg_success2') in incoming:
             self.flags_success.append(self.current_flag.get('flag'))
-        elif GAME_SERVER_MSG_SERVICE_DOWN in incoming:
+        elif self.config.get('game_server_msg_service_down') in incoming:
             self.log.error('[%s] [GAMESERVER REPORTED SERVICE NOT AVAILABLE]',
                 self.current_flag.get('service'))
             self.flags_pending.append(self.current_flag.get('flag'))
-        elif GAME_SERVER_MSG_EXPIRED in incoming:
+        elif self.config.get('game_server_msg_expired') in incoming:
             # log.debug('Flag expired')
             self.flags_expired.append(self.current_flag.get('flag'))
-        elif GAME_SERVER_MSG_INVALID in incoming:
+        elif self.config.get('game_server_msg_invalid') in incoming:
             # log.debug('Invalid flag')
             self.flags_failed.append(self.current_flag.get('flag'))
-        elif GAME_SERVER_MSG_OWN_FLAG in incoming:
+        elif self.config.get('game_server_msg_own_flag') in incoming:
             # log.debug('Own flag')
             self.flags_failed.append(self.current_flag.get('flag'))
-        elif GAME_SERVER_MSG_ALREADY_SUBMITTED in incoming:
+        elif self.config.get('game_server_msg_already_submitted') in incoming:
             # log.debug('Flag already submitted')
             self.flags_failed.append(self.current_flag.get('flag'))
-        elif GAME_SERVER_MSG_TOO_MUCH in incoming:
+        elif self.config.get('game_server_msg_too_much') in incoming:
             """TODO: The gameserver may complains about too much connections from our team.
             This message has to be adjusted. Abort the current session and retry the current
             flags in the next iteration."""

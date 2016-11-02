@@ -6,34 +6,30 @@ import logging
 from helperlib.logging import default_config, load_config
 
 from ctfpwn.db import CtfDb
+from ctfpwn.shared import load_ctf_config
 from ctfpwn.flagservice.receiver import FlagReceiverProtocol
 from ctfpwn.flagservice.submitter import submitter
 
 log = logging.getLogger(__name__)
 
-# TODO: move to config file
-# Local flag-service settings
-SERVICE_PORT = 8081
-SERVICE_ADDR = '127.0.0.1'
-# Interval settings for all jobs
-SERVICE_SUBMIT_INTERVAL = 12
-SERVICE_STATS_INTERVAL = 5
-# According to rules, a round is about ~2 min, this corresponds
-# to the validity times of flags. But this may vary.
-CTF_ROUND_DURATION = 120
 
-
-async def stats(db):
+async def stats(db, config):
     while True:
         await db.flag_stats()
-        await asyncio.sleep(SERVICE_STATS_INTERVAL)
+        await asyncio.sleep(config.get('flag_stats_interval'))
 
-async def init(loop):
-    db = await CtfDb.create()
-    # Print stats every SERVICE_STATS_INTERVAL seconds.
-    loop.create_task(stats(db))
-    loop.create_task(submitter(db, loop))
-    receiver = loop.create_server(lambda: FlagReceiverProtocol(db), SERVICE_ADDR, SERVICE_PORT)
+async def submission(db, config):
+    while True:
+        await submitter(db, config)
+        await asyncio.sleep(config.get('flag_submission_interval'))
+
+async def init(loop, config):
+    db = await CtfDb.create(config=config)
+    loop.create_task(stats(db, config))
+    loop.create_task(submission(db, config))
+    receiver = loop.create_server(lambda: FlagReceiverProtocol(db),
+                                  config.get('flag_service_host'),
+                                  config.get('flag_service_port'))
     loop.create_task(receiver)
 
 def run_flagservice():
@@ -46,10 +42,10 @@ def run_flagservice():
         default_config(level=logging.DEBUG, disable_existing_loggers=False)
         log.warning('No logging config file flagservice.ini found. Using default')
 
+    config = load_ctf_config('config.yaml')
     log.info('Starting Flag Service')
     loop = asyncio.get_event_loop()
-    loop.create_task(init(loop))
-    # loop.add_signal_handler(signal.SIGINT, loop.stop)
+    loop.create_task(init(loop, config))
     try:
         loop.run_forever()
     except KeyboardInterrupt:
