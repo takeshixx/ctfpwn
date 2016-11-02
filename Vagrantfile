@@ -76,7 +76,7 @@ Vagrant.configure("2") do |config|
     mkdir -p /srv/ctf/{ctf-pwn,logs}
     chown -R ubuntu:ubuntu /srv/ctf
     su ubuntu -c "virtualenv /srv/ctf/env"
-    su ubuntu -c "cp -r /vagrant/{ctfpwn,run-*.py,requirements.txt} /srv/ctf/ctf-pwn"
+    su ubuntu -c "cp -r /vagrant/{ctfpwn,run-*.py,*.ini,config.yaml,requirements.txt} /srv/ctf/ctf-pwn"
     su ubuntu -c "/srv/ctf/env/bin/pip install -r /srv/ctf/ctf-pwn/requirements.txt"
     cp -r /vagrant/*.service /etc/systemd/system
   SHELL
