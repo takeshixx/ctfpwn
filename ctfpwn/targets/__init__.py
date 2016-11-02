@@ -6,7 +6,8 @@ import signal
 
 from helperlib.logging import default_config, load_config
 
-from ctfpwn.exploitservice.exploitdb import ExploitDB
+#from ctfpwn.exploitservice.exploitdb import ExploitDB
+from ctfpwn.db import CtfDb
 from ctfpwn.targets.supervisor import TargetSupervisor
 
 log = logging.getLogger(__name__)
@@ -21,8 +22,8 @@ CTF_NETWORK = '172.23.11.0/24'
 
 
 async def _start():
-    exploit_db = await ExploitDB.create()
-    supervisor = TargetSupervisor(exploit_db,
+    db = await CtfDb.create()
+    supervisor = TargetSupervisor(db,
                                   networks=CTF_NETWORK,
                                   discover_ports=DISCOVER_PORTS,
                                   service_ports=SERVICE_PORTS)
