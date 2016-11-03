@@ -29,7 +29,7 @@ async def _start(config):
     supervisor.start(config.get('discovery_interval'), config.get('service_interval'))
 
 
-def run_targetservice(config=None):
+def run_targetservice(config='config.yaml'):
     try:
         load_config('targetservice.ini', disable_existing_loggers=False)
     except Exception as e:

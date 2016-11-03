@@ -30,7 +30,7 @@ async def _start(loop, config):
     loop.create_task(receiver)
 
 
-def run_flagservice(config=None):
+def run_flagservice(config='config.yaml'):
     """Main function which handles requests and application
     logic. This function needs to be called in order to start
     the flag-service."""
