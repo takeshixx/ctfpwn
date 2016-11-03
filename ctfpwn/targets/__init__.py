@@ -28,7 +28,8 @@ async def _start(config):
                                   service_ports=config.get('service_ports'))
     supervisor.start(config.get('discovery_interval'), config.get('service_interval'))
 
-def run_targetservice(config):
+
+def run_targetservice(config=None):
     try:
         load_config('targetservice.ini', disable_existing_loggers=False)
     except Exception as e:
@@ -54,6 +55,7 @@ def run_targetservice(config):
         sys.exit(1)
     finally:
         loop.close()
+
 
 if __name__ == '__main__':
     run_targetservice()

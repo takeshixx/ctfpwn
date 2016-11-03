@@ -12,23 +12,6 @@ LOG_LEVEL_STAT = logging.INFO + 1
 logging.addLevelName(LOG_LEVEL_STAT, 'STATISTIC')
 
 
-async def submitter(db, config):
-    """Flag submission job, runs every SERVICE_SUBMIT_INTERVAL
-    seconds."""
-    log.debug('Called submitter')
-    loop = asyncio.get_event_loop()
-    t0 = time.time()
-    flags = await db.select_new_and_pending_flags(limit=config.get('flag_max_submits'))
-    if flags:
-        log.info('[SUBMIT] [COUNT %d]', len(flags))
-        loop.create_connection(lambda: FlagSubmissionProtocol(flags, db, config),
-                               config.get('gameserver_host'),
-                               config.get('gameserver_port'))
-    else:
-        log.info('[SUBMIT] No NEW/PENDING flags for submission...')
-    log.debug('Finished submitter(), took %f', time.time() - t0)
-
-
 @scope_logger
 class FlagSubmissionProtocol(asyncio.Protocol):
     """An interface to the gameserver for submitting flags.
