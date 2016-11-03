@@ -78,6 +78,6 @@ Vagrant.configure("2") do |config|
     su ubuntu -c "virtualenv /srv/ctf/env"
     su ubuntu -c "cp -r /vagrant/{ctfpwn,run-*.py,*.ini,config.yaml,requirements.txt} /srv/ctf/ctf-pwn"
     su ubuntu -c "/srv/ctf/env/bin/pip install -r /srv/ctf/ctf-pwn/requirements.txt"
-    cp -r /vagrant/*.service /etc/systemd/system
+    cp -r /vagrant/systemd/*.service /etc/systemd/system
   SHELL
 end
