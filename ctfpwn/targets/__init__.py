@@ -11,14 +11,6 @@ from ctfpwn.targets.supervisor import TargetSupervisor
 
 log = logging.getLogger(__name__)
 
-# TODO: move to configuration file
-DISCOVERY_INTERVAL = 45
-SERVICE_INTERVAL = 15
-# TODO: include open ports of vulenrable vm
-DISCOVER_PORTS = [22, 80, 8080]
-SERVICE_PORTS = [80, 9090]
-CTF_NETWORK = '172.23.11.0/24'
-
 
 async def _start(config):
     db = await CtfDb.create(config=config)
@@ -29,7 +21,7 @@ async def _start(config):
     supervisor.start(config.get('discovery_interval'), config.get('service_interval'))
 
 
-def run_targetservice(config='config.yaml'):
+def run_targetservice(config=None):
     try:
         load_config('targetservice.ini', disable_existing_loggers=False)
     except Exception as e:

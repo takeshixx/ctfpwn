@@ -25,8 +25,8 @@ class Target(object):
 
 
 def load_ctf_config(path):
-    if not os.path.isfile(path):
-        path = 'config.yaml'
+    if not path or not os.path.isfile(path):
+        path = os.path.join(os.path.dirname(__file__), '../config.yaml')
     path = open(path, 'r')
     try:
         conf = yaml.load(path.read())
