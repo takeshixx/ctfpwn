@@ -22,6 +22,7 @@ class Target(object):
         self.host = host
         self.is_alive = False
         self.services_alive = list()
+        self.services_fixed = list()
 
 
 class Service(object):
