@@ -7,7 +7,6 @@ import pymongo
 from helperlib.logging import scope_logger
 
 log = logging.getLogger(__name__)
-
 LOG_LEVEL_STAT = logging.INFO + 1
 logging.addLevelName(LOG_LEVEL_STAT, 'STATISTIC')
 
@@ -28,13 +27,12 @@ class CtfDb():
         try:
             # TODO: one time connect instead of every instance?
             self.mongo = motor.motor_asyncio.AsyncIOMotorClient(host, port)
-            self.exploitdb = self.mongo.exploitservice
-            self.col_expl = self.exploitdb.exploits
-            self.col_runs = self.exploitdb.runs
-            self.col_targets = self.exploitdb.targets
-            self.flagdb = self.mongo.flagservice
-            self.col_flags = self.flagdb.flags
-            self.col_services = self.flagdb.services
+            self.ctfdb = self.mongo.ctfdb
+            self.exploits = self.ctfdb.exploits
+            self.exploit_runs = self.ctfdb.runs
+            self.targets = self.ctfdb.targets
+            self.flags = self.ctfdb.flags
+            self.services = self.ctfdb.services
         except Exception as e:
             self.log.exception(e)
 
@@ -46,13 +44,13 @@ class CtfDb():
 
     async def setup_database_indexes(self):
         """Speed up find queries by creating indexes."""
-        await self.col_flags.create_index([('flag', pymongo.ASCENDING)])
-        await self.col_flags.create_index([('state', pymongo.ASCENDING)])
+        await self.flags.create_index([('flag', pymongo.ASCENDING)])
+        await self.flags.create_index([('state', pymongo.ASCENDING)])
 
     async def insert_new_flag(self, flag):
         """Insert a new flag if it does not already exist, set status to NEW."""
         try:
-            return await self.col_flags.update(
+            return await self.flags.update(
                 {'flag': flag.flag},
                 {'$setOnInsert':
                     {'service': flag.service,
@@ -67,35 +65,35 @@ class CtfDb():
 
     async def select_exploits(self, limit=0):
         try:
-            cursor = self.col_expl.find(limit=limit)
+            cursor = self.exploits.find(limit=limit)
             return await cursor.to_list(None)
         except Exception as e:
             self.log.exception(e)
 
     async def select_exploits_enabled(self):
         try:
-            cursor = self.col_expl.find({'enabled': True})
+            cursor = self.exploits.find({'enabled': True})
             return await cursor.to_list(None)
         except Exception as e:
             self.log.exception(e)
 
     async def select_exploit_services(self, limit=0):
         try:
-            cursor = self.col_expl.distinct('port')
+            cursor = self.exploits.distinct('port')
             return await cursor.to_list(None)
         except Exception as e:
             self.log.exception(e)
 
     async def select_alive_targets(self):
         try:
-            cursor = self.col_targets.find({'alive': True})
+            cursor = self.targets.find({'alive': True})
             return await cursor.to_list(None)
         except Exception as e:
             self.log.exception(e)
 
     async def update_target(self, target, alive):
         try:
-            return self.col_targets.update(
+            return self.targets.update(
                 {'host': target},
                 {'$set': {'alive': alive, 'timestamp': int(time.time())}}, upsert=True)
         except Exception as e:
@@ -106,7 +104,7 @@ class CtfDb():
             # services should be a live of object IDs
             if not isinstance(services, list):
                 self.log.error('services should be a list of object IDs')
-            return await self.col_targets.update(
+            return await self.targets.update(
                 {'host': target},
                 {'$set': {'services': services, 'timestamp': int(time.time())}}, upsert=True)
         except Exception as e:
@@ -115,7 +113,7 @@ class CtfDb():
     async def insert_service(self, service):
         """Insert a new service if it does not yet exist."""
         try:
-            return await self.col_services.update(
+            return await self.services.update(
                     {'name': service.name},
                     {'$set':
                         {'name': service.name,
@@ -123,8 +121,17 @@ class CtfDb():
                          'port': service.port,
                          'url': service.url,
                          'meta': service.meta,
-                         'timestamp': int(time.time())
-                    }}, upsert=True)
+                         'timestamp': int(time.time())}},
+                    upsert=True)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def select_all_services(self, limit=0):
+        """Return <limit> services from database. Defaults
+        to all services."""
+        try:
+            cursor = self.services.find(limit=limit)
+            return await cursor.to_list(None)
         except Exception as e:
             self.log.exception(e)
 
@@ -132,7 +139,7 @@ class CtfDb():
         """Return <limit> services from database. Defaults
         to all services."""
         try:
-            cursor = self.col_services.find({'type': service_type}, limit=limit)
+            cursor = self.services.find({'type': service_type}, limit=limit)
             return await cursor.to_list(None)
         except Exception as e:
             self.log.exception(e)
@@ -140,14 +147,14 @@ class CtfDb():
     async def delete_service(self, service_name):
         """Delete a service by it's name."""
         try:
-            return await self.col_services.remove({'name': service_name})
+            return await self.services.remove({'name': service_name})
         except Exception as e:
             self.log.exception(e)
 
     async def update_exploit(self, service, exploit, port, enabled):
         """Enable/Disable and exploit. If the exploit does not exists, it will be created."""
         try:
-            return await self.col_expl.update(
+            return await self.exploits.update(
                     {'service': service,
                      'exploit': exploit,
                      'port': port},
@@ -162,13 +169,13 @@ class CtfDb():
     async def delete_exploit(self, service_name):
         """Delete a exploit by it's service name."""
         try:
-            return await self.col_expl.remove({'service': service_name})
+            return await self.exploits.remove({'service': service_name})
         except Exception as e:
             self.log.exception(e)
 
     async def insert_run(self, service, exploit, target, port, state, started, finished):
         try:
-            return await self.col_runs.insert({
+            return await self.exploit_runs.insert({
                 'service': service,
                 'exploit': exploit,
                 'target': target,
@@ -184,7 +191,7 @@ class CtfDb():
         """Return <limit> flags from database. Defaults
         to all documents."""
         try:
-            cursor = self.col_flags.find(limit=limit)
+            cursor = self.flags.find(limit=limit)
             return await cursor.to_list(None)
         except Exception as e:
             self.log.exception(e)
@@ -193,7 +200,7 @@ class CtfDb():
         """Return all flags with status new and pending
         for submission."""
         try:
-            cursor = self.col_flags.find({
+            cursor = self.flags.find({
                         '$or': [{'state': 'NEW'},
                                 {'state': 'PENDING'}]}, limit=limit)
             return await cursor.to_list(None)
@@ -204,7 +211,7 @@ class CtfDb():
         """Submission of flag was successful, set flag
         as SUBMITTED."""
         try:
-            return await self.col_flags.update(
+            return await self.flags.update(
                     {'flag': flag},
                     {'$set': {'state': 'SUBMITTED',
                               'submitted': int(time.time())}})
@@ -216,7 +223,7 @@ class CtfDb():
         accepted, set them as PENDING in order to retry
         submission."""
         try:
-            return await self.col_flags.update(
+            return await self.flags.update(
                     {'flag': flag},
                     {'$set': {'state': 'PENDING'}})
         except Exception as e:
@@ -226,7 +233,7 @@ class CtfDb():
         """Flags that are EXPIRED, set them as expired,
         do not try to submit them again."""
         try:
-            return await self.col_flags.update(
+            return await self.flags.update(
                     {'flag': flag},
                     {'$set': {'state': 'EXPIRED'}})
         except Exception as e:
@@ -237,7 +244,7 @@ class CtfDb():
         reason, most likely they are invalid. Mark them as
         FAILED."""
         try:
-            return await self.col_flags.update(
+            return await self.flags.update(
                     {'flag': flag},
                     {'$set': {'state': 'FAILED'}})
         except Exception as e:
@@ -268,12 +275,12 @@ class CtfDb():
         flags, count of successful or failed submissions and such."""
         try:
             stats = dict()
-            stats['totalFlags'] = await self.col_flags.find().count()
-            stats['newCount'] = await self.col_flags.find({'state': 'NEW'}).count()
-            stats['submittedCount'] = await self.col_flags.find({'state': 'SUBMITTED'}).count()
-            stats['expiredCount'] = await self.col_flags.find({'state': 'EXPIRED'}).count()
-            stats['failedCount'] = await self.col_flags.find({'state': 'FAILED'}).count()
-            stats['pendingCount'] = await self.col_flags.find({'state': 'PENDING'}).count()
+            stats['totalFlags'] = await self.flags.find().count()
+            stats['newCount'] = await self.flags.find({'state': 'NEW'}).count()
+            stats['submittedCount'] = await self.flags.find({'state': 'SUBMITTED'}).count()
+            stats['expiredCount'] = await self.flags.find({'state': 'EXPIRED'}).count()
+            stats['failedCount'] = await self.flags.find({'state': 'FAILED'}).count()
+            stats['pendingCount'] = await self.flags.find({'state': 'PENDING'}).count()
             return stats
         except Exception as e:
             self.log.exception(e)
