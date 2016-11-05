@@ -14,10 +14,7 @@ log = logging.getLogger(__name__)
 
 async def _start(config):
     db = await CtfDb.create(config=config)
-    supervisor = TargetSupervisor(db,
-                                  networks=config.get('ctf_network'),
-                                  discover_ports=config.get('discovery_ports'),
-                                  service_ports=config.get('service_ports'))
+    supervisor = TargetSupervisor(db, config)
     supervisor.start(config.get('discovery_interval'), config.get('service_interval'))
 
 
