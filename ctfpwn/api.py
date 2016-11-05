@@ -91,7 +91,7 @@ async def targets(request):
 async def services(request):
     service_id = request.match_info.get('service_id')
     if not service_id:
-        services = await db.select_services()
+        services = await db.select_all_services()
         services = remove_objectid(services)
         return aiohttp.web.json_response(services)
 
@@ -108,7 +108,7 @@ async def create_service(request):
             {'error': {'required arguments': ['name', 'service_type', 'port', 'url']}})
         ret.set_status(400)
         return ret
-    if port and url:
+    if type == 'port' and (port and url):
         ret = aiohttp.web.json_response(
             {'error': {'invalid argument': 'either port or url should be defined (not both)'}})
         ret.set_status(400)
@@ -129,7 +129,7 @@ async def create_service(request):
     if service_type == 'port':
         service = Service(name, service_type, port=port, meta=meta)
     else:
-        service = Service(name, service_type, url=url, meta=meta)
+        service = Service(name, 'url', url=url, port=port, meta=meta)
     result = await db.insert_service(service)
     if result['nModified'] > 0 or result['ok'] > 0:
         return aiohttp.web.Response(status=201, text='Successfully created service')

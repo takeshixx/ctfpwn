@@ -1,5 +1,6 @@
 import asyncio
 import aiohttp
+import aiohttp.errors
 import random
 
 from helperlib.logging import scope_logger
@@ -13,6 +14,10 @@ USER_AGENTS = ['Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Fir
 
 @scope_logger
 class HttpWorker(object):
+    """This worker class is supposed to check wheater
+    a given URL is accessible, meaning a GET request
+    returns any status code other than one starting
+    with 4 (client error) or 5 (server error)."""
     def __init__(self, db, loop=None):
         self.db = db
         self.loop = loop or asyncio.get_event_loop()
@@ -43,9 +48,19 @@ class HttpWorker(object):
         path = service.get('url')
         if not path.startswith('/'):
             path = '/' + path
-        url = 'http://' + self.target.get('host') + path
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers={'User-Agent': random.choice(USER_AGENTS)}) as resp:
-                status = str(resp.status)
-        if not status.startswith('4') and not status.startswith('5'):
-            self.alive_services.append(service.get('id'))
+        url = 'http://' + self.target.get('host')
+        if service.get('port'):
+            try:
+                port = str(int(service.get('port')))
+                url += ':' + port
+            except ValueError:
+                pass
+        url += path
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers={'User-Agent': random.choice(USER_AGENTS)}) as resp:
+                    status = str(resp.status)
+            if not status.startswith('4') and not status.startswith('5'):
+                self.alive_services.append(service.get('id'))
+        except (ConnectionRefusedError, aiohttp.errors.ClientOSError):
+            pass

@@ -10,6 +10,8 @@ from helperlib.logging import scope_logger
 
 @scope_logger
 class TransportWorker(object):
+    """This worker class checks whether given TCP ports
+    are open on the targets."""
     def __init__(self, db, loop=None):
         self.db = db
         self.loop = loop or asyncio.get_event_loop()
