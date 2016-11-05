@@ -23,7 +23,7 @@ async def _start(loop, config):
     db = await CtfDb.create(config=config)
     loop.create_task(stats(db, config))
     supervisor = FlagSupervisor(db, config)
-    supervisor.start(config.get('flag_submission_interval'))
+    supervisor.start()
     receiver = loop.create_server(lambda: FlagReceiverProtocol(db),
                                   config.get('flag_service_host'),
                                   config.get('flag_service_port'))

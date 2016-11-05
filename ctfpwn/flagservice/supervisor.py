@@ -1,5 +1,6 @@
-"""This module includes everything that is needed to submit flags to
-the gameserver."""
+"""This module includes the supervisor that schedules flag
+submissions. See the worker.py module for the acutal game
+server communication implementation."""
 import time
 import asyncio
 import logging
@@ -14,6 +15,8 @@ log = logging.getLogger(__name__)
 
 @scope_logger
 class FlagSupervisor(object):
+    """This class schedules flag submissions and handles
+    submission interval delays if errors occur."""
     def __init__(self, db, config, loop=None):
         self.db = db
         self.config = config
@@ -31,11 +34,11 @@ class FlagSupervisor(object):
 
     def reschedule_submission(self, offset):
         if (self.submit_interval + offset) >= self.config.get('flag_submission_interval_max'):
-            self.log.debug('Reached max submission reschedule threshold (%d seconds)',
+            self.log.debug('[SUBMISSION] Reached max submission reschedule threshold (%d seconds)',
                            self.config.get('flag_submission_interval_max'))
             self.submit_interval = self.config.get('flag_submission_interval_max')
             return
-        self.log.info('Rescheduling submission from %d to %d seconds',
+        self.log.info('[SUBMISSION] Rescheduling submission from %d to %d seconds',
                       self.submit_interval,
                       self.submit_interval + offset)
         self.submit_interval += offset
@@ -43,17 +46,16 @@ class FlagSupervisor(object):
     def reset_submission_interval(self):
         if self.submit_interval == self.config.get('flag_submission_interval'):
             return
-        self.log.info('Rescheduling to default submission (every %d secods)',
+        self.log.info('[SUBMISSION] Rescheduling to default submission (every %d secods)',
                       self.config.get('flag_submission_interval'))
         self.submit_interval = self.config.get('flag_submission_interval')
 
     async def submit(self):
         """Flag submission job."""
-        log.debug('Called submit')
         t0 = time.time()
         flags = await self.db.select_new_and_pending_flags(limit=self.config.get('flag_max_submits'))
         if flags:
-            log.info('[SUBMISSION] [COUNT %d]', len(flags))
+            log.info('[SUBMISSION] Trying to submit %d flags', len(flags))
             future = self.loop.create_future()
             try:
                 await self.loop.create_connection(
@@ -62,7 +64,7 @@ class FlagSupervisor(object):
                     self.config.get('gameserver_port'))
                 await future
             except ConnectionRefusedError:
-                self.log.error('Could not connect to gameserver!')
+                self.log.error('[GAMESERVER] Could not connect to gameserver!')
             except TooMuchConnectionsException:
                 self.reschedule_submission(10)
                 return
@@ -73,5 +75,5 @@ class FlagSupervisor(object):
                 future.set_result(False)
             self.reset_submission_interval()
         else:
-            log.info('[SUBMISSION] No NEW/PENDING flags for submission...')
-        log.debug('Finished flag submission, took %f seconds', time.time() - t0)
+            self.log.info('[SUBMISSION] No NEW/PENDING flags for submission')
+        self.log.debug('[SUBMISSION] Finished flag submission, took %f seconds', time.time() - t0)

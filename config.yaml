@@ -45,6 +45,7 @@ gameserver_port: 9000
 # How many flags should be submitted at the same time at max.
 flag_max_submits: 1000
 # Messages by the gameserver, need to be adjusted
+game_server_msg_ready: 'Send me your flags...'
 game_server_msg_success: 'accepted'
 game_server_msg_success2: 'congratulations'
 game_server_msg_expired: 'expired'
@@ -53,7 +54,6 @@ game_server_msg_invalid: 'no such flag'
 game_server_msg_own_flag: 'own flag'
 game_server_msg_too_much: 'too much'
 game_server_msg_already_submitted: 'already submitted'
-game_server_msg_welcome: 'Welcome to the Game Server'
 
 # Target Service
 target_stats_interval: 9

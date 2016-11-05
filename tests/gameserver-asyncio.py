@@ -21,7 +21,8 @@ class GameServerProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         self.transport = transport
         self.peername = transport.get_extra_info('peername')
-        self._write_line(b'Welcome to the Game Server, send me flags...')
+        self._write_line(b'Welcome to the Game Server')
+        self._write_line(b'Send me your flags...')
 
     def data_received(self, data):
         response = b''
