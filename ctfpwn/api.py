@@ -50,7 +50,11 @@ async def create_exploit(request):
             {'error': {'value error': 'port is not numeric'}})
         ret.set_status(400)
         return ret
-    if not enabled in [True, False, 0, 1, 'yes', 'Yes', 'YES', 'no', 'No', 'NO']:
+    if enabled in ['true', 'yes', 'Yes', 'YES', '1', 1]:
+        enabled = True
+    elif enabled in ['false', 'no', 'No', 'NO', '0', 0]:
+        enabled = False
+    else:
         ret = aiohttp.web.json_response(
             {'error': {'value error': 'invalid value for enabled'}})
         ret.set_status(400)
@@ -61,7 +65,7 @@ async def create_exploit(request):
         ret.set_status(400)
         return ret
     result = await db.update_exploit(service, exploit, port, enabled)
-    if result['nModified'] > 0:
+    if result['nModified'] > 0 or result['ok'] > 0:
         return aiohttp.web.Response(status=201, text='Successfully created exploit')
     else:
         return aiohttp.web.Response(status=500, text='Exploit creation failed')
