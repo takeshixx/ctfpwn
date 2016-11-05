@@ -73,7 +73,7 @@ Vagrant.configure("2") do |config|
     systemctl start mongodb
     pip3 install --upgrade pip
     pip3 install virtualenv mongo-connector elastic2-doc-manager
-    mkdir -p /srv/ctf/{ctf-pwn,logs}
+    mkdir -p /srv/ctf/{ctf-pwn,logs,exploits}
     chown -R ubuntu:ubuntu /srv/ctf
     su ubuntu -c "virtualenv /srv/ctf/env"
     su ubuntu -c "cp -r /vagrant/{ctfpwn,run-*.py,*.ini,config.yaml,requirements.txt} /srv/ctf/ctf-pwn"
