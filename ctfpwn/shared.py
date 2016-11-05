@@ -47,3 +47,7 @@ def load_ctf_config(path):
         print(e)
         return
     return conf
+
+
+class TooMuchConnectionsException(Exception):
+    pass

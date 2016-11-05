@@ -53,7 +53,6 @@ def run_flagservice(config=None):
         tasks.cancel()
         loop.stop()
         loop.run_forever()
-        # tasks.exception()
     except Exception as e:
         print(e)
         sys.exit(1)

@@ -3,7 +3,8 @@ database:
   host: '127.0.0.1'
   port: 27017
 
-ctf_network: '10.60.1.0/23'
+ctf_network: '172.23.11.0/24,172.22.12.0/24'
+ctf_network_exclude: '1.1.1.1'
 ctf_own_box: '10.60.42.2'
 
 # A CTF round will be ~2min
@@ -35,6 +36,7 @@ exploit_supervisor_interval: 25
 
 # Flag Service
 flag_submission_interval: 12
+flag_submission_interval_max: 50
 flag_stats_interval: 5
 flag_service_host: '127.0.0.1'
 flag_service_port: 8081
@@ -43,14 +45,15 @@ gameserver_port: 9000
 # How many flags should be submitted at the same time at max.
 flag_max_submits: 1000
 # Messages by the gameserver, need to be adjusted
-game_server_msg_success: b'accepted'
-game_server_msg_success2: b'congratulations'
-game_server_msg_expired: b'expired'
-game_server_msg_service_down: b'corresponding'
-game_server_msg_invalid: b'no such flag'
-game_server_msg_own_flag: b'own flag'
-game_server_msg_too_much: b'too much'
-game_server_msg_already_submitted: b'already submitted'
+game_server_msg_success: 'accepted'
+game_server_msg_success2: 'congratulations'
+game_server_msg_expired: 'expired'
+game_server_msg_service_down: 'corresponding'
+game_server_msg_invalid: 'no such flag'
+game_server_msg_own_flag: 'own flag'
+game_server_msg_too_much: 'too much'
+game_server_msg_already_submitted: 'already submitted'
+game_server_msg_welcome: 'Welcome to the Game Server'
 
 # Target Service
 target_stats_interval: 9

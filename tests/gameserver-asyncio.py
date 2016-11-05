@@ -12,7 +12,8 @@ import codecs
 
 HOST = '127.0.0.1'
 PORT = 8888
-STATES = [b'expired', b'no such flag', b'accepted', b'corresponding', b'own flag']
+STATES = [b'expired', b'no such flag', b'accepted',
+          b'corresponding', b'own flag', b'too much']
 FLAGS = re.compile(br'(\w{31}=)')
 
 
