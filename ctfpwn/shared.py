@@ -24,6 +24,15 @@ class Target(object):
         self.services_alive = list()
 
 
+class Service(object):
+    def __init__(self, name, service_type, port=0, url='', meta=''):
+        self.name = name
+        self.type = service_type,
+        self.port = port
+        self.url = url
+        self.meta = meta
+
+
 def load_ctf_config(path):
     if not path or not os.path.isfile(path):
         path = os.path.join(os.path.dirname(__file__), '../config.yaml')
