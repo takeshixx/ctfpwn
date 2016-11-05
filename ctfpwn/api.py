@@ -3,7 +3,7 @@ import os.path
 import aiohttp.web
 
 from ctfpwn.db import CtfDb
-
+from ctfpwn.shared import Service
 
 def remove_objectid(ilist):
     """Remove MongoDB's _id field
@@ -18,6 +18,11 @@ def remove_objectid(ilist):
         out.append(_e)
     return out
 
+
+async def index(request):
+    return aiohttp.web.json_response({'endpoints': ['/exploits',
+                                                    '/targets',
+                                                    '/services']})
 
 async def exploits(request):
     exploit_id = request.match_info.get('exploit_id')
@@ -62,8 +67,17 @@ async def create_exploit(request):
         return aiohttp.web.Response(status=500, text='Exploit creation failed')
 
 
-async def modify_exploit(reuqest):
-    pass
+async def delete_exploit(request):
+    exploit_id = request.match_info.get('exploit_id')
+    if exploit_id:
+        result = await db.delete_exploit(exploit_id)
+        if result and result.get('ok') > 0:
+            if result.get('n') > 0:
+                return aiohttp.web.Response(status=201, text='Successfully deleted exploit')
+            else:
+                return aiohttp.web.Response(status=201, text='Exploit not found')
+        else:
+            return aiohttp.web.Response(status=500, text='Exploit deletion failed')
 
 
 async def targets(request):
@@ -74,14 +88,81 @@ async def targets(request):
         return aiohttp.web.json_response(targets)
 
 
+async def services(request):
+    service_id = request.match_info.get('service_id')
+    if not service_id:
+        services = await db.select_services()
+        services = remove_objectid(services)
+        return aiohttp.web.json_response(services)
+
+
+async def create_service(request):
+    body = await request.post()
+    name = body.get('name')
+    service_type = body.get('type')
+    port = body.get('port')
+    url = body.get('url')
+    meta = body.get('meta')
+    if not name or not service_type or not (port or url):
+        ret = aiohttp.web.json_response(
+            {'error': {'required arguments': ['name', 'service_type', 'port', 'url']}})
+        ret.set_status(400)
+        return ret
+    if port and url:
+        ret = aiohttp.web.json_response(
+            {'error': {'invalid argument': 'either port or url should be defined (not both)'}})
+        ret.set_status(400)
+        return ret
+    if port:
+        try:
+            port = int(port)
+        except ValueError:
+            ret = aiohttp.web.json_response(
+                {'error': {'value error': 'port is not numeric'}})
+            ret.set_status(400)
+            return ret
+    if not service_type in ['port', 'url']:
+        ret = aiohttp.web.json_response(
+            {'error': {'invalid type': 'type should be port or url'}})
+        ret.set_status(400)
+        return ret
+    if service_type == 'port':
+        service = Service(name, service_type, port=port, meta=meta)
+    else:
+        service = Service(name, service_type, url=url, meta=meta)
+    result = await db.insert_service(service)
+    if result['nModified'] > 0 or result['ok'] > 0:
+        return aiohttp.web.Response(status=201, text='Successfully created service')
+    else:
+        return aiohttp.web.Response(status=500, text='Service creation failed')
+
+
+async def delete_service(request):
+    service_id = request.match_info.get('service_id')
+    if service_id:
+        result = await db.delete_service(service_id)
+        if result and result.get('ok') > 0:
+            if result.get('n') > 0:
+                return aiohttp.web.Response(status=201, text='Successfully deleted service')
+            else:
+                return aiohttp.web.Response(status=201, text='Service not found')
+        else:
+            return aiohttp.web.Response(status=500, text='Service deletion failed')
+
+
 def create_app():
     app = aiohttp.web.Application()
+    app.router.add_get('/', index)
     app.router.add_get('/exploits', exploits)
     app.router.add_post('/exploits', create_exploit)
     app.router.add_get('/exploits/{exploit_id}', exploits)
-    app.router.add_put('/exploits/{exploit_id}', modify_exploit)
+    app.router.add_delete('/exploits/{exploit_id}', delete_exploit)
     app.router.add_get('/targets', targets)
     app.router.add_get('/targets/{targets_id}', targets)
+    app.router.add_get('/services', services)
+    app.router.add_post('/services', create_service)
+    app.router.add_get('/services/{service_id}', services)
+    app.router.add_delete('/services/{service_id}', delete_service)
     return app
 
 

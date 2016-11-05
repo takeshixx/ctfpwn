@@ -96,14 +96,51 @@ class CtfDb():
     async def update_target(self, target, alive):
         try:
             return self.col_targets.update(
-                {'host': target}, {'$set': {'alive': alive}}, upsert=True)
+                {'host': target},
+                {'$set': {'alive': alive, 'timestamp': int(time.time())}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
 
     async def update_target_services(self, target, services):
         try:
+            # services should be a live of object IDs
+            if not isinstance(services, list):
+                self.log.error('services should be a list of object IDs')
             return await self.col_targets.update(
-                {'host': target}, {'$set': {'services': services}}, upsert=True)
+                {'host': target},
+                {'$set': {'services': services, 'timestamp': int(time.time())}}, upsert=True)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def insert_service(self, service):
+        """Insert a new service if it does not yet exist."""
+        try:
+            return await self.col_services.update(
+                    {'name': service.name},
+                    {'$set':
+                        {'name': service.name,
+                         'type': service.type,
+                         'port': service.port,
+                         'url': service.url,
+                         'meta': service.meta,
+                         'timestamp': int(time.time())
+                    }}, upsert=True)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def select_services(self, service_type='port', limit=0):
+        """Return <limit> services from database. Defaults
+        to all services."""
+        try:
+            cursor = self.col_services.find({'type': service_type}, limit=limit)
+            return await cursor.to_list(None)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def delete_service(self, service_name):
+        """Delete a service by it's name."""
+        try:
+            return await self.col_services.remove({'name': service_name})
         except Exception as e:
             self.log.exception(e)
 
@@ -117,7 +154,15 @@ class CtfDb():
                     {'$set': {'service': service,
                               'exploit': exploit,
                               'port': port,
-                              'enabled': enabled}}, upsert=True)
+                              'enabled': enabled,
+                              'timestamp': int(time.time())}}, upsert=True)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def delete_exploit(self, service_name):
+        """Delete a exploit by it's service name."""
+        try:
+            return await self.col_expl.remove({'service': service_name})
         except Exception as e:
             self.log.exception(e)
 
@@ -130,7 +175,8 @@ class CtfDb():
                 'port': port,
                 'state': state,
                 'started': started,
-                'finished': finished})
+                'finished': finished,
+                'timestamp': int(time.time())})
         except Exception as e:
             self.log.exception(e)
 
@@ -160,9 +206,8 @@ class CtfDb():
         try:
             return await self.col_flags.update(
                     {'flag': flag},
-                    {'$set': {
-                        'state': 'SUBMITTED',
-                        'submitted': int(time.time())}})
+                    {'$set': {'state': 'SUBMITTED',
+                              'submitted': int(time.time())}})
         except Exception as e:
             self.log.exception(e)
 
@@ -198,51 +243,51 @@ class CtfDb():
         except Exception as e:
             self.log.exception(e)
 
-    async def insert_service(self, service):
-        """Insert a new service if it does not yet exist."""
-        try:
-            return await self.col_services.update_one(
-                    {'name': service.name},
-                    {'$setOnInsert':
-                        {'name': service.name,
-                         'host': service.host,
-                         'port': service.port,
-                         'state': service.state,
-                         'changed': int(time.time()),
-                         'comment': service.comment,
-                         'timestamp': int(time.time())
-                    }}, upsert=True)
-        except Exception as e:
-            self.log.exception(e)
+    # async def insert_service(self, service):
+    #     """Insert a new service if it does not yet exist."""
+    #     try:
+    #         return await self.col_services.update_one(
+    #                 {'name': service.name},
+    #                 {'$setOnInsert':
+    #                     {'name': service.name,
+    #                      'host': service.host,
+    #                      'port': service.port,
+    #                      'state': service.state,
+    #                      'changed': int(time.time()),
+    #                      'comment': service.comment,
+    #                      'timestamp': int(time.time())
+    #                 }}, upsert=True)
+    #     except Exception as e:
+    #         self.log.exception(e)
 
-    async def update_service_up(self, service):
-        """Update a service, set state to UP."""
-        try:
-            return await self.col_services.update(
-                    {'name': service.name},
-                    {'$set': {'state': 'UP',
-                              'changed': int(time.time())}})
-        except Exception as e:
-            self.log.exception(e)
-
-    async def update_service_down(self, service):
-        """Update a service, set state to DOWN."""
-        try:
-            return self.col_services.update(
-                    {'name': service.name},
-                    {'$set': {'state': 'DOWN',
-                              'changed': int(time.time())}})
-        except Exception as e:
-            self.log.exception(e)
-
-    async def select_services(self, limit=0):
-        """Return <limit> services from database. Defaults
-        to all services."""
-        try:
-            cursor = self.col_services.find(limit=limit)
-            return await cursor.to_list(None)
-        except Exception as e:
-            self.log.exception(e)
+    # async def update_service_up(self, service):
+    #     """Update a service, set state to UP."""
+    #     try:
+    #         return await self.col_services.update(
+    #                 {'name': service.name},
+    #                 {'$set': {'state': 'UP',
+    #                           'changed': int(time.time())}})
+    #     except Exception as e:
+    #         self.log.exception(e)
+    #
+    # async def update_service_down(self, service):
+    #     """Update a service, set state to DOWN."""
+    #     try:
+    #         return self.col_services.update(
+    #                 {'name': service.name},
+    #                 {'$set': {'state': 'DOWN',
+    #                           'changed': int(time.time())}})
+    #     except Exception as e:
+    #         self.log.exception(e)
+    #
+    # async def select_services(self, limit=0):
+    #     """Return <limit> services from database. Defaults
+    #     to all services."""
+    #     try:
+    #         cursor = self.col_services.find(limit=limit)
+    #         return await cursor.to_list(None)
+    #     except Exception as e:
+    #         self.log.exception(e)
 
     async def exploit_stats(self):
         """Print available exploit, just for test purposes."""
