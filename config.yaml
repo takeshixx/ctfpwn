@@ -16,23 +16,21 @@ ctf_target_alive_interval: 180
 # Global instance to grep for flags, e.g.JAJAJAJAJAJAJAJAJAJAJAJAJAJAJAA=
 ctf_flag_grep: '(\w{31}=)'
 
-# Maximum amount of concurrent running exploits.
-max_concurrent_worksers: 2048
-
 # Start of the CTF (November 21, 2015 at 10:00 UTC)
 game_start: 1448100000
 
 # The time when the network should be open (1hour after CTF has started)
 network_open: game_start + 60 * 60
 
-# If an exploit is still running after x seconds, kill it with fire!
-kill_exploit_after: 120
-
-supervisor_clean_workers_interval: 120
-
 # Exploit Service
 exploit_stats_interval: 8
 exploit_supervisor_interval: 25
+supervisor_clean_workers_interval: 120
+# If an exploit is still running after x seconds, kill it with fire!
+kill_exploit_after: 120
+# Maximum amount of concurrent running exploits.
+max_concurrent_worksers: 2048
+exploits_error_log_path: '/srv/ctf/logs'
 
 # Flag Service
 flag_submission_interval: 12

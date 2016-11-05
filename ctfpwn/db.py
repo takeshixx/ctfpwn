@@ -173,16 +173,16 @@ class CtfDb():
         except Exception as e:
             self.log.exception(e)
 
-    async def insert_run(self, service, exploit, target, port, state, started, finished):
+    async def insert_run(self, service, exploit, target, started,
+                         finished, state):
         try:
             return await self.exploit_runs.insert({
                 'service': service,
                 'exploit': exploit,
                 'target': target,
-                'port': port,
-                'state': state,
                 'started': started,
                 'finished': finished,
+                'state': state,
                 'timestamp': int(time.time())})
         except Exception as e:
             self.log.exception(e)
