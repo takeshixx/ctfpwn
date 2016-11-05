@@ -32,6 +32,7 @@ def run_targetservice(config=None):
         load_config(os.path.join(os.path.dirname(__file__), '../../targetservice.ini'),
                     disable_existing_loggers=False)
     except Exception as e:
+        log.exception(e)
         default_config(level=logging.DEBUG, disable_existing_loggers=False)
         log.warning('No logging config file targetservice.ini found. Using default')
 

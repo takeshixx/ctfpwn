@@ -39,6 +39,7 @@ def run_flagservice(config=None):
         load_config(os.path.join(os.path.dirname(__file__), '../../flagservice.ini'),
                     disable_existing_loggers=False)
     except Exception as e:
+        log.exception(e)
         default_config(level=logging.DEBUG, disable_existing_loggers=False)
         log.warning('No logging config file flagservice.ini found. Using default')
 
