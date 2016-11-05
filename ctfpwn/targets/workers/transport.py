@@ -2,6 +2,7 @@ import asyncio
 import subprocess
 import time
 import functools
+import bson
 
 from libnmap.parser import NmapParser, NmapParserException
 
@@ -72,7 +73,7 @@ class TransportWorker(object):
         for port in ports:
             for service in self.services:
                 if service.get('port') == port:
-                    alive_services.append(service.get('id'))
+                    alive_services.append(str(bson.ObjectId(service.get('_id'))))
         self.log.info('Found %d running service(s) on target %s', len(ports), host.address)
         self.loop.create_task(self.db.update_target_services(host.address, alive_services))
 
