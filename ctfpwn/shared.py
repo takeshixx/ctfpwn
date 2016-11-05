@@ -25,9 +25,13 @@ class Target(object):
 
 
 class Service(object):
-    def __init__(self, name, service_type, port=0, url='', meta=''):
+    """This class should be used whenever a service
+    is working on vulnerable services that will be
+    processed."""
+    def __init__(self, name, service_type, port=0,
+                 url='', meta=''):
         self.name = name
-        self.type = service_type,
+        self.type = service_type
         self.port = port
         self.url = url
         self.meta = meta
