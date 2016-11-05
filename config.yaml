@@ -53,6 +53,7 @@ game_server_msg_too_much: b'too much'
 game_server_msg_already_submitted: b'already submitted'
 
 # Target Service
+target_stats_interval: 9
 discovery_interval: 45
 service_interval: 15
 discovery_ports: [22, 80, 8080]

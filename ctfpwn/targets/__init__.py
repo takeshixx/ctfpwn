@@ -12,10 +12,18 @@ from ctfpwn.targets.supervisor import TargetSupervisor
 log = logging.getLogger(__name__)
 
 
-async def _start(config):
+async def stats(db, config):
+    while True:
+        await db.targets_stats()
+        await asyncio.sleep(config.get('target_stats_interval'))
+
+
+async def _start(loop, config):
     db = await CtfDb.create(config=config)
+    loop.create_task(stats(db, config))
     supervisor = TargetSupervisor(db, config)
-    supervisor.start(config.get('discovery_interval'), config.get('service_interval'))
+    supervisor.start(config.get('discovery_interval'),
+                     config.get('service_interval'))
 
 
 def run_targetservice(config=None):
@@ -28,7 +36,7 @@ def run_targetservice(config=None):
     config = load_ctf_config(config)
     log.info('Starting Target Service')
     loop = asyncio.get_event_loop()
-    loop.create_task(_start(config))
+    loop.create_task(_start(loop, config))
     try:
         loop.run_forever()
     except KeyboardInterrupt:
@@ -38,7 +46,6 @@ def run_targetservice(config=None):
         tasks.cancel()
         loop.stop()
         loop.run_forever()
-        # tasks.exception()
     except Exception as e:
         print(e)
         sys.exit(1)

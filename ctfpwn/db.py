@@ -243,52 +243,6 @@ class CtfDb():
         except Exception as e:
             self.log.exception(e)
 
-    # async def insert_service(self, service):
-    #     """Insert a new service if it does not yet exist."""
-    #     try:
-    #         return await self.col_services.update_one(
-    #                 {'name': service.name},
-    #                 {'$setOnInsert':
-    #                     {'name': service.name,
-    #                      'host': service.host,
-    #                      'port': service.port,
-    #                      'state': service.state,
-    #                      'changed': int(time.time()),
-    #                      'comment': service.comment,
-    #                      'timestamp': int(time.time())
-    #                 }}, upsert=True)
-    #     except Exception as e:
-    #         self.log.exception(e)
-
-    # async def update_service_up(self, service):
-    #     """Update a service, set state to UP."""
-    #     try:
-    #         return await self.col_services.update(
-    #                 {'name': service.name},
-    #                 {'$set': {'state': 'UP',
-    #                           'changed': int(time.time())}})
-    #     except Exception as e:
-    #         self.log.exception(e)
-    #
-    # async def update_service_down(self, service):
-    #     """Update a service, set state to DOWN."""
-    #     try:
-    #         return self.col_services.update(
-    #                 {'name': service.name},
-    #                 {'$set': {'state': 'DOWN',
-    #                           'changed': int(time.time())}})
-    #     except Exception as e:
-    #         self.log.exception(e)
-    #
-    # async def select_services(self, limit=0):
-    #     """Return <limit> services from database. Defaults
-    #     to all services."""
-    #     try:
-    #         cursor = self.col_services.find(limit=limit)
-    #         return await cursor.to_list(None)
-    #     except Exception as e:
-    #         self.log.exception(e)
-
     async def exploit_stats(self):
         """Print available exploit, just for test purposes."""
         try:
@@ -296,10 +250,16 @@ class CtfDb():
             exploits = len(exploits)
             exploits_enabled = await self.select_exploits_enabled()
             exploits_enabled = len(exploits_enabled)
-            self.log.log(LOG_LEVEL_STAT, '[EXPLOITS] [AVAILABLE %d] [ENABLED %d]', exploits, exploits_enabled)
+            self.log.log(LOG_LEVEL_STAT, '[AVAILABLE %d] [ENABLED %d]', exploits, exploits_enabled)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def targets_stats(self):
+        """Print stats for targets in database."""
+        try:
             targets = await self.select_alive_targets()
             targets = len(targets)
-            self.log.log(LOG_LEVEL_STAT, '[TARGETS] [ALIVE %d]', targets)
+            self.log.log(LOG_LEVEL_STAT, '[ALIVE %d]', targets)
         except Exception as e:
             self.log.exception(e)
 
