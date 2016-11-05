@@ -1,5 +1,5 @@
 [Unit]
-Description=Exploit Service
+Description=Flag Service
 
 [Service]
 Restart=always
