@@ -2,6 +2,7 @@
 import sys
 import asyncio
 import logging
+import os.path
 
 from helperlib.logging import default_config, load_config
 
@@ -35,7 +36,8 @@ def run_flagservice(config=None):
     logic. This function needs to be called in order to start
     the flag-service."""
     try:
-        load_config('flagservice.ini', disable_existing_loggers=False)
+        load_config(os.path.join(os.path.dirname(__file__), '../../flagservice.ini'),
+                    disable_existing_loggers=False)
     except Exception as e:
         default_config(level=logging.DEBUG, disable_existing_loggers=False)
         log.warning('No logging config file flagservice.ini found. Using default')

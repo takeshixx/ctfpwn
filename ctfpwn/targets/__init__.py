@@ -2,6 +2,7 @@
 import logging
 import sys
 import asyncio
+import os.path
 
 from helperlib.logging import default_config, load_config
 
@@ -28,7 +29,8 @@ async def _start(loop, config):
 
 def run_targetservice(config=None):
     try:
-        load_config('targetservice.ini', disable_existing_loggers=False)
+        load_config(os.path.join(os.path.dirname(__file__), '../../targetservice.ini'),
+                    disable_existing_loggers=False)
     except Exception as e:
         default_config(level=logging.DEBUG, disable_existing_loggers=False)
         log.warning('No logging config file targetservice.ini found. Using default')
