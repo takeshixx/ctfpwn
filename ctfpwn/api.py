@@ -50,9 +50,9 @@ async def create_exploit(request):
             {'error': {'value error': 'port is not numeric'}})
         ret.set_status(400)
         return ret
-    if enabled in ['true', 'yes', 'Yes', 'YES', '1', 1]:
+    if str(enabled).lower() in ['true', 'yes', '1']:
         enabled = True
-    elif enabled in ['false', 'no', 'No', 'NO', '0', 0]:
+    elif str(enabled).lower() in ['false', 'no', '0']:
         enabled = False
     else:
         ret = aiohttp.web.json_response(
