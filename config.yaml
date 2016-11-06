@@ -64,3 +64,100 @@ service_ports: [22, 80, 8080]
 # API
 api_listening_host: '127.0.0.1'
 api_listening_port: 8080
+
+#### LOGGING ####
+logging:
+    default: &DEFAULT_LOGGING
+        version: 1
+        disable_existing_loggers: False
+        handlers: &DEFAULT_LOGGING_HANDLERS
+            console:
+                class: logging.StreamHandler
+                formatter: color
+                level: DEBUG
+                stream: ext://sys.stdout
+            syslog:
+                class: logging.handlers.SysLogHandler
+                level: ERROR
+                formatter: extended
+            file: &DEFAULT_LOGGING_HANDLERS_FILE
+                class: logging.handlers.TimedRotatingFileHandler
+                level: INFO
+                formatter: extended
+                filename: default.log
+                when: h
+                interval: 1
+                backupCount: 10
+        formatters: &DEFAULT_LOGGING_FORMATTERS
+            color: &DEFAULT_LOGGING_FORMATTERS_COLOR
+                class: helperlib.logging.ColorFormatter
+                format: '[%(asctime)s] [%(levelname)9s] %(message)s'
+                datefmt: '%H:%M:%S'
+            extended: &DEFAULT_LOGGING_FORMATTERS_EXTENDED
+                format: '[%(asctime)s] [%(levelname)9s] [%(name)20s] [%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s'
+                datefmt: '%H:%M:%S'
+            simple: &DEFAULT_LOGGING_FORMATTERS_SIMPLE
+                format: '[%(asctime)s] [%(levelname)9s] %(message)s'
+                datefmt: '%H:%M:%S'
+        root:
+            level: NOTSET
+            handlers:
+                - console
+                - file
+
+    exploitservice:
+        <<: *DEFAULT_LOGGING
+        handlers:
+            <<: *DEFAULT_LOGGING_HANDLERS
+            file:
+                <<: *DEFAULT_LOGGING_HANDLERS_FILE
+                filename: exploitservice.log
+        formatters:
+            <<: *DEFAULT_LOGGING_FORMATTERS
+            color:
+                <<: *DEFAULT_LOGGING_FORMATTERS_COLOR
+                format: '[%(asctime)s] [EXPLOITS] [%(levelname)9s] %(message)s'
+            extended:
+                <<: *DEFAULT_LOGGING_FORMATTERS_EXTENDED
+                format: '[%(asctime)s] [EXPLOITS] [%(levelname)9s] [%(name)20s] [%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s'
+            simple:
+                <<: *DEFAULT_LOGGING_FORMATTERS_SIMPLE
+                format: '[%(asctime)s] [EXPLOITS] [%(levelname)9s] %(message)s'
+
+    flagservice:
+        <<: *DEFAULT_LOGGING
+        handlers:
+            <<: *DEFAULT_LOGGING_HANDLERS
+            file:
+                <<: *DEFAULT_LOGGING_HANDLERS_FILE
+                filename: flagservice.log
+        formatters:
+            <<: *DEFAULT_LOGGING_FORMATTERS
+            color:
+                <<: *DEFAULT_LOGGING_FORMATTERS_COLOR
+                format: '[%(asctime)s] [FLAGS] [%(levelname)9s] %(message)s'
+            extended:
+                <<: *DEFAULT_LOGGING_FORMATTERS_EXTENDED
+                format: '[%(asctime)s] [FLAGS] [%(levelname)9s] [%(name)20s] [%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s'
+            simple:
+                <<: *DEFAULT_LOGGING_FORMATTERS_SIMPLE
+                format: '[%(asctime)s] [FLAGS] [%(levelname)9s] %(message)s'
+
+    targetservice:
+        <<: *DEFAULT_LOGGING
+        handlers:
+            <<: *DEFAULT_LOGGING_HANDLERS
+            file:
+                <<: *DEFAULT_LOGGING_HANDLERS_FILE
+                filename: targetservice.log
+        formatters:
+            <<: *DEFAULT_LOGGING_FORMATTERS
+            color:
+                <<: *DEFAULT_LOGGING_FORMATTERS_COLOR
+                format: '[%(asctime)s] [TARGETS] [%(levelname)9s] %(message)s'
+            extended:
+                <<: *DEFAULT_LOGGING_FORMATTERS_EXTENDED
+                format: '[%(asctime)s] [TARGETS] [%(levelname)9s] [%(name)20s] [%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s'
+            simple:
+                <<: *DEFAULT_LOGGING_FORMATTERS_SIMPLE
+                format: '[%(asctime)s] [TARGETS] [%(levelname)9s] %(message)s'

@@ -1,6 +1,11 @@
 import time
 import yaml
-import os.path
+import pathlib
+import logging
+import logging.config
+from helperlib.logging import default_config
+
+log = logging.getLogger(__name__)
 
 
 class Flag(object):
@@ -38,16 +43,29 @@ class Service(object):
         self.meta = meta
 
 
-def load_ctf_config(path):
-    if not path or not os.path.isfile(path):
-        path = os.path.join(os.path.dirname(__file__), '../config.yaml')
-    path = open(path, 'r')
+def load_ctf_config(path, logging_section=None):
+    if path and not isinstance(path, pathlib.Path):
+        path = pathlib.Path(path)
+
+    if not path or not path.is_file():
+        path = pathlib.Path(__file__).parent.parent / 'config.yaml'
+
+    if not logging_section:
+        default_config(level=logging.DEBUG, disable_existing_loggers=False)
+        logging_section = 'default'
+
     try:
-        conf = yaml.load(path.read())
+        with path.open() as fp:
+            conf = yaml.load(fp)
     except yaml.YAMLError as e:
-        print(e)
-        return
-    return conf
+        log.exception('Error during config load')
+    else:
+        if 'logging' in conf and logging_section in conf['logging']:
+            logging.config.dictConfig(conf['logging'][logging_section])
+            log.info('Logging configured from %s', logging_section)
+        else:
+            log.warning('Logging default used')
+        return conf
 
 
 class TooMuchConnectionsException(Exception):

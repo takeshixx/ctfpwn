@@ -4,8 +4,6 @@ import sys
 import asyncio
 import os.path
 
-from helperlib.logging import default_config, load_config
-
 from ctfpwn.db import CtfDb
 from ctfpwn.shared import load_ctf_config
 from ctfpwn.targets.supervisor import TargetSupervisor
@@ -28,15 +26,7 @@ async def _start(loop, config):
 
 
 def run_targetservice(config=None):
-    try:
-        load_config(os.path.join(os.path.dirname(__file__), '../../targetservice.ini'),
-                    disable_existing_loggers=False)
-    except Exception as e:
-        log.exception(e)
-        default_config(level=logging.DEBUG, disable_existing_loggers=False)
-        log.warning('No logging config file targetservice.ini found. Using default')
-
-    config = load_ctf_config(config)
+    config = load_ctf_config(config, logging_section='targetservice')
     log.info('Starting Target Service')
     loop = asyncio.get_event_loop()
     loop.create_task(_start(loop, config))
