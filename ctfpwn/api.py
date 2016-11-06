@@ -147,7 +147,7 @@ async def delete_service(request):
         result = await db.delete_service(service_id)
         if result and result.get('ok') > 0:
             if result.get('n') > 0:
-                return aiohttp.web.Response(status=201, text='Successfully deleted service')
+                return aiohttp.web.Response(status=200, text='Successfully deleted service')
             else:
                 return aiohttp.web.Response(status=404, text='Service not found')
         else:
