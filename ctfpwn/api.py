@@ -1,20 +1,20 @@
 import asyncio
 import os.path
 import aiohttp.web
+import bson
 
 from ctfpwn.db import CtfDb
 from ctfpwn.shared import Service
 
-def remove_objectid(ilist):
-    """Remove MongoDB's _id field
-    from query result to make it
-    JSON-dumpable."""
+def cast_objectid(ilist):
+    """Cast MongoDB's ObjectID to a string
+    to make the API dict's JSON-dumpable."""
     out = list()
     for e in ilist:
         if not '_id' in e.keys():
             continue
         _e = dict(e)
-        del _e['_id']
+        _e['_id'] = str(bson.ObjectId(_e['_id']))
         out.append(_e)
     return out
 
@@ -28,7 +28,7 @@ async def exploits(request):
     exploit_id = request.match_info.get('exploit_id')
     if not exploit_id:
         exploits = await db.select_exploits()
-        exploits = remove_objectid(exploits)
+        exploits = cast_objectid(exploits)
         return aiohttp.web.json_response(exploits)
 
 
@@ -88,7 +88,7 @@ async def targets(request):
     target_id = request.match_info.get('target_id')
     if not target_id:
         targets = await db.select_alive_targets()
-        targets = remove_objectid(targets)
+        targets = cast_objectid(targets)
         return aiohttp.web.json_response(targets)
 
 
@@ -96,7 +96,7 @@ async def services(request):
     service_id = request.match_info.get('service_id')
     if not service_id:
         services = await db.select_all_services()
-        services = remove_objectid(services)
+        services = cast_objectid(services)
         return aiohttp.web.json_response(services)
 
 
