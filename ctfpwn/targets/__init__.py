@@ -25,7 +25,7 @@ async def _start(loop, config):
 
 
 def run_targetservice(config=None):
-    config = load_ctf_config(config, logging_section='logging_targetservice')
+    config = load_ctf_config(config, logging_section='targetservice')
     log.info('Starting Target Service')
     loop = asyncio.get_event_loop()
     loop.create_task(_start(loop, config))

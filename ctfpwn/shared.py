@@ -52,7 +52,7 @@ def load_ctf_config(path, logging_section=None):
 
     if not logging_section:
         default_config(level=logging.DEBUG, disable_existing_loggers=False)
-        logging_section = 'logging_default'
+        logging_section = 'default'
 
     try:
         with path.open() as fp:
@@ -60,8 +60,8 @@ def load_ctf_config(path, logging_section=None):
     except yaml.YAMLError as e:
         log.exception('Error during config load')
     else:
-        if logging_section in conf:
-            logging.config.dictConfig(conf[logging_section])
+        if 'logging' in conf and logging_section in conf['logging']:
+            logging.config.dictConfig(conf['logging'][logging_section])
             log.info('Logging configured from %s', logging_section)
         else:
             log.warning('Logging default used')

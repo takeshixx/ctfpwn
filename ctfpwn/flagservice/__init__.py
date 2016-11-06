@@ -32,7 +32,7 @@ def run_flagservice(config=None):
     """Main function which handles requests and application
     logic. This function needs to be called in order to start
     the flag-service."""
-    config = load_ctf_config(config, logging_section='logging_flagservice')
+    config = load_ctf_config(config, logging_section='flagservice')
     log.info('Starting Flag Service')
     loop = asyncio.get_event_loop()
     loop.create_task(_start(loop, config))
