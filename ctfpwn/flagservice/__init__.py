@@ -3,8 +3,6 @@ import sys
 import asyncio
 import logging
 
-from helperlib.logging import default_config, load_config
-
 from ctfpwn.db import CtfDb
 from ctfpwn.shared import load_ctf_config
 from ctfpwn.flagservice.receiver import FlagReceiverProtocol
@@ -34,13 +32,7 @@ def run_flagservice(config=None):
     """Main function which handles requests and application
     logic. This function needs to be called in order to start
     the flag-service."""
-    try:
-        load_config('flagservice.ini', disable_existing_loggers=False)
-    except Exception as e:
-        default_config(level=logging.DEBUG, disable_existing_loggers=False)
-        log.warning('No logging config file flagservice.ini found. Using default')
-
-    config = load_ctf_config(config)
+    config = load_ctf_config(config, logging_section='logging_flagservice')
     log.info('Starting Flag Service')
     loop = asyncio.get_event_loop()
     loop.create_task(_start(loop, config))
