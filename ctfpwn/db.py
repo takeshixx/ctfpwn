@@ -1,6 +1,7 @@
 """This module provides an interface to the database and
 anything that is needed to handle exploits, flags and targets."""
 import time
+import datetime
 import logging
 import motor.motor_asyncio
 import pymongo
@@ -58,7 +59,7 @@ class CtfDb():
                      'flag': flag.flag,
                      'state': 'NEW',
                      'comment': '',
-                     'timestamp': int(time.time()),
+                     'timestamp': datetime.datetime.now(),
                      'submitted': 0}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
@@ -95,7 +96,7 @@ class CtfDb():
         try:
             return self.targets.update(
                 {'host': target},
-                {'$set': {'alive': alive, 'timestamp': int(time.time())}}, upsert=True)
+                {'$set': {'alive': alive, 'timestamp': datetime.datetime.now()}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
 
@@ -106,7 +107,7 @@ class CtfDb():
                 self.log.error('services should be a list of object IDs')
             return await self.targets.update(
                 {'host': target},
-                {'$set': {'services': services, 'timestamp': int(time.time())}}, upsert=True)
+                {'$set': {'services': services, 'timestamp': datetime.datetime.now()}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
 
@@ -121,7 +122,7 @@ class CtfDb():
                          'port': service.port,
                          'url': service.url,
                          'meta': service.meta,
-                         'timestamp': int(time.time())}},
+                         'timestamp': datetime.datetime.now()}},
                     upsert=True)
         except Exception as e:
             self.log.exception(e)
@@ -162,7 +163,7 @@ class CtfDb():
                               'exploit': exploit,
                               'port': port,
                               'enabled': enabled,
-                              'timestamp': int(time.time())}}, upsert=True)
+                              'timestamp': datetime.datetime.now()}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
 
@@ -183,7 +184,7 @@ class CtfDb():
                 'started': started,
                 'finished': finished,
                 'state': state,
-                'timestamp': int(time.time())})
+                'timestamp': datetime.datetime.now()})
         except Exception as e:
             self.log.exception(e)
 
