@@ -1,10 +1,61 @@
 import asyncio
 import os.path
 import aiohttp.web
+import jinja2
 import bson
 
 from ctfpwn.db import CtfDb
 from ctfpwn.shared import Service
+
+dashboard_html = """<html>
+<head>
+    <title>CTF-PWN Dashboard</title>
+</head>
+<body>
+    <h2>Services</h2>
+    <table>
+        <tr><th>Name</th><th>Type</th><th>Port</th><th>URL</th><th>Meta</th></tr>
+        {% for service in services %}
+        <tr><td>{{ service.name }}</td><td>{{ service.type }}</td><td>{{ service.port }}</td><td>{{ service.url }}</td><td>{{ service.meta }}</td></tr>
+        {% endfor %}
+    </table>
+    <h2>Create New Service</h2>
+    <form action="/api/services" method="post">
+        <label for="name">Name</label>
+        <input name="name" />
+        <label for="type">Type</label>
+        <input name="type" />
+        <label for="port">Port</label>
+        <input name="port" />
+        <label for="url">URL</label>
+        <input name="url" />
+        <label for="meta">Meta</label>
+        <input name="meta" />
+        <input type="submit" />
+    </form>
+
+    <h2>Exploits</h2>
+    <table>
+        <tr><th>Service</th><th>Exploit</th><th>Port</th><th>Enabled</th></tr>
+        {% for exploit in exploits %}
+        <tr><td>{{ exploit.service }}</td><td>{{ exploit.exploit }}</td><td>{{ exploit.port }}</td><td>{{ exploit.enabled }}</td></tr>
+        {% endfor %}
+    </table>
+    <h2>Create New Exploit</h2>
+    <form action="/api/exploits" method="post">
+        <label for="service">Service</label>
+        <input name="service" />
+        <label for="exploit">Exploit</label>
+        <input name="exploit" type="file" />
+        <label for="port">Port</label>
+        <input name="port" />
+        <label for="enabled">Enabled</label>
+        <input name="enabled" type="checkbox" />
+        <input type="submit" />
+    </form>
+</body>
+</html>"""
+
 
 def cast_objectid(ilist):
     """Cast MongoDB's ObjectID to a string
@@ -17,6 +68,14 @@ def cast_objectid(ilist):
         _e['_id'] = str(bson.ObjectId(_e['_id']))
         out.append(_e)
     return out
+
+
+async def dashboard(request):
+    services = await db.select_all_services()
+    exploits = await db.select_exploits()
+    ret = jinja2.Environment().from_string(dashboard_html).render(services=services,
+                                                                  exploits=exploits)
+    return aiohttp.web.Response(text=ret, content_type='text/html')
 
 
 async def index(request):
@@ -156,17 +215,18 @@ async def delete_service(request):
 
 def create_app():
     app = aiohttp.web.Application()
-    app.router.add_get('/', index)
-    app.router.add_get('/exploits', exploits)
-    app.router.add_post('/exploits', create_exploit)
-    app.router.add_get('/exploits/{exploit_id}', exploits)
-    app.router.add_delete('/exploits/{exploit_id}', delete_exploit)
-    app.router.add_get('/targets', targets)
-    app.router.add_get('/targets/{targets_id}', targets)
-    app.router.add_get('/services', services)
-    app.router.add_post('/services', create_service)
-    app.router.add_get('/services/{service_id}', services)
-    app.router.add_delete('/services/{service_id}', delete_service)
+    app.router.add_get('/', dashboard)
+    app.router.add_get('/api', index)
+    app.router.add_get('/api/exploits', exploits)
+    app.router.add_post('/api/exploits', create_exploit)
+    app.router.add_get('/api/exploits/{exploit_id}', exploits)
+    app.router.add_delete('/api/exploits/{exploit_id}', delete_exploit)
+    app.router.add_get('/api/targets', targets)
+    app.router.add_get('/api/targets/{targets_id}', targets)
+    app.router.add_get('/api/services', services)
+    app.router.add_post('/api/services', create_service)
+    app.router.add_get('/api/services/{service_id}', services)
+    app.router.add_delete('/api/services/{service_id}', delete_service)
     return app
 
 
