@@ -33,7 +33,7 @@ pexploits.add_argument('--delete', default=None, help='Delete an exploits')
 pexploits.add_argument('--service', help='The service which is exploited')
 pexploits.add_argument('--exploit', help='The path of the exploit on the API host')
 pexploits.add_argument('--port', help='The service port')
-pexploits.add_argument('--enabled', action='store_true', dest='exploit_enabled',
+pexploits.add_argument('--enabled', action='store_true', dest='enabled',
                        default=True, help='Enable or disable the exploit (default: True)')
 
 ptargets = SUBARGS.add_parser('targets', help='List targets')
@@ -82,7 +82,7 @@ class CtfpwnCli(object):
 
     def create_exploit(self):
         if not self.args.service or not self.args.exploit \
-                or not self.args.port:
+                or not self.args.port or not isinstance(self.args.enabled, (type(True), type(False))):
             LOGGER.error('--service, --exploit and --port are mandatory')
         data = dict(service=self.args.service,
                     exploit=self.args.exploit,
