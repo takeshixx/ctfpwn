@@ -5,6 +5,7 @@ import datetime
 import logging
 import motor.motor_asyncio
 import pymongo
+import bson
 from helperlib.logging import scope_logger
 
 log = logging.getLogger(__name__)
@@ -72,6 +73,13 @@ class CtfDb():
         except Exception as e:
             self.log.exception(e)
 
+    async def select_exploit_id(self, exploit_id):
+        try:
+            cursor = self.exploits.find({'_id': bson.ObjectId(exploit_id)})
+            return await cursor.to_list(None)
+        except Exception as e:
+            self.log.exception(e)
+
     async def select_exploits_enabled(self):
         try:
             cursor = self.exploits.find({'enabled': True})
@@ -83,6 +91,45 @@ class CtfDb():
         try:
             cursor = self.exploits.distinct('port')
             return await cursor.to_list(None)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def update_exploit(self, service, exploit, port, enabled):
+        """Enable/Disable and exploit. If the exploit does not exists, it will be created."""
+        try:
+            return await self.exploits.update(
+                    {'service': service,
+                     'exploit': exploit,
+                     'port': port},
+                    {'$set': {'service': service,
+                              'exploit': exploit,
+                              'port': port,
+                              'enabled': enabled,
+                              'timestamp': datetime.datetime.utcnow()}}, upsert=True)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def toggle_exploit(self, exploit_id, enabled):
+        """Enable or disable an existing exploit."""
+        try:
+            return await self.exploits.update(
+                    {'_id': bson.ObjectId(exploit_id)},
+                    {'$set': {'enabled': enabled,
+                              'timestamp': datetime.datetime.utcnow()}})
+        except Exception as e:
+            self.log.exception(e)
+
+    async def delete_exploit_id(self, exploit_id):
+        """Delete a exploit by it's ObjectID."""
+        try:
+            return await self.exploits.remove({'_id': bson.ObjectId(exploit_id)})
+        except Exception as e:
+            self.log.exception(e)
+
+    async def delete_exploit(self, service_name):
+        """Delete a exploit by it's service name."""
+        try:
+            return await self.exploits.remove({'service': service_name})
         except Exception as e:
             self.log.exception(e)
 
@@ -172,25 +219,10 @@ class CtfDb():
         except Exception as e:
             self.log.exception(e)
 
-    async def update_exploit(self, service, exploit, port, enabled):
-        """Enable/Disable and exploit. If the exploit does not exists, it will be created."""
+    async def delete_service_id(self, service_id):
+        """Delete a service by it's ObjectID."""
         try:
-            return await self.exploits.update(
-                    {'service': service,
-                     'exploit': exploit,
-                     'port': port},
-                    {'$set': {'service': service,
-                              'exploit': exploit,
-                              'port': port,
-                              'enabled': enabled,
-                              'timestamp': datetime.datetime.utcnow()}}, upsert=True)
-        except Exception as e:
-            self.log.exception(e)
-
-    async def delete_exploit(self, service_name):
-        """Delete a exploit by it's service name."""
-        try:
-            return await self.exploits.remove({'service': service_name})
+            return await self.services.remove({'_id': bson.ObjectId(service_id)})
         except Exception as e:
             self.log.exception(e)
 
