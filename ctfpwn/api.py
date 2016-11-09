@@ -195,7 +195,7 @@ async def create_service(request):
         service = Service(name, 'url', url=url, port=port, meta=meta)
     result = await db.insert_service(service)
     if result['nModified'] > 0 or result['ok'] > 0:
-        return aiohttp.web.Response(status=200, text='Successfully created service')
+        return aiohttp.web.Response(status=201, text='Successfully created service')
     else:
         return aiohttp.web.Response(status=500, text='Service creation failed')
 
