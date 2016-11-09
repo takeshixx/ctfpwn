@@ -32,6 +32,7 @@ class CtfDb():
             self.exploits = self.ctfdb.exploits
             self.exploit_runs = self.ctfdb.runs
             self.targets = self.ctfdb.targets
+            self.target_runs = self.ctfdb.target_runs
             self.flags = self.ctfdb.flags
             self.services = self.ctfdb.services
         except Exception as e:
@@ -59,7 +60,7 @@ class CtfDb():
                      'flag': flag.flag,
                      'state': 'NEW',
                      'comment': '',
-                     'timestamp': datetime.datetime.utcnow(),
+                     'timestamp': datetime.datetime.now(),
                      'submitted': 0}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
@@ -92,22 +93,41 @@ class CtfDb():
         except Exception as e:
             self.log.exception(e)
 
-    async def update_target(self, target, alive):
+    async def select_alive_target_runs(self):
         try:
-            return self.targets.update(
-                {'host': target},
-                {'$set': {'alive': alive, 'timestamp': datetime.datetime.utcnow()}}, upsert=True)
+            pipeline = [{'$match': {'alive': True}},
+                        {'$sort': {'host': 1, 'timestamp': 1}},
+                        {'$group': {'_id': '$host', "host":
+                            {'$last': '$host'}, 'timestamp': {'$last': '$timestamp'}}}]
+            cursor = self.target_runs.aggregate(pipeline)
+            return await cursor.to_list(None)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def update_target(self, target, alive):
+        timestamp = datetime.datetime.utcnow()
+        try:
+            async def _run():
+                await self.targets.update(
+                    {'host': target, 'alive': alive},
+                    {'$set': {'alive': alive, 'timestamp': timestamp}}, upsert=True)
+                await self.target_runs.update(
+                    {'host': target,
+                     'timestamp': timestamp},
+                    {'$set': {'alive': alive, 'timestamp': timestamp}}, upsert=True)
+            return await _run()
         except Exception as e:
             self.log.exception(e)
 
     async def update_target_services(self, target, services):
+        timestamp = datetime.datetime.utcnow()
         try:
             # services should be a live of object IDs
             if not isinstance(services, list):
                 self.log.error('services should be a list of object IDs')
-            return await self.targets.update(
+            await self.targets.update(
                 {'host': target},
-                {'$set': {'services': services, 'timestamp': datetime.datetime.utcnow()}}, upsert=True)
+                {'$set': {'services': services, 'timestamp': timestamp}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
 
