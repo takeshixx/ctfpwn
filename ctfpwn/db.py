@@ -59,7 +59,7 @@ class CtfDb():
                      'flag': flag.flag,
                      'state': 'NEW',
                      'comment': '',
-                     'timestamp': datetime.datetime.now(),
+                     'timestamp': datetime.datetime.utcnow(),
                      'submitted': 0}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
@@ -96,7 +96,7 @@ class CtfDb():
         try:
             return self.targets.update(
                 {'host': target},
-                {'$set': {'alive': alive, 'timestamp': datetime.datetime.now()}}, upsert=True)
+                {'$set': {'alive': alive, 'timestamp': datetime.datetime.utcnow()}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
 
@@ -107,7 +107,7 @@ class CtfDb():
                 self.log.error('services should be a list of object IDs')
             return await self.targets.update(
                 {'host': target},
-                {'$set': {'services': services, 'timestamp': datetime.datetime.now()}}, upsert=True)
+                {'$set': {'services': services, 'timestamp': datetime.datetime.utcnow()}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
 
@@ -122,7 +122,7 @@ class CtfDb():
                          'port': service.port,
                          'url': service.url,
                          'meta': service.meta,
-                         'timestamp': datetime.datetime.now()}},
+                         'timestamp': datetime.datetime.utcnow()}},
                     upsert=True)
         except Exception as e:
             self.log.exception(e)
@@ -163,7 +163,7 @@ class CtfDb():
                               'exploit': exploit,
                               'port': port,
                               'enabled': enabled,
-                              'timestamp': datetime.datetime.now()}}, upsert=True)
+                              'timestamp': datetime.datetime.utcnow()}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
 
@@ -184,7 +184,7 @@ class CtfDb():
                 'started': started,
                 'finished': finished,
                 'state': state,
-                'timestamp': datetime.datetime.now()})
+                'timestamp': datetime.datetime.utcnow()})
         except Exception as e:
             self.log.exception(e)
 
