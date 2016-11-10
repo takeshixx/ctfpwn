@@ -4,3 +4,4 @@ python-libnmap
 aiohttp
 PyYAML
 requests
+jinja2
