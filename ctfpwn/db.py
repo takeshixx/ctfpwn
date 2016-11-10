@@ -1,6 +1,5 @@
 """This module provides an interface to the database and
 anything that is needed to handle exploits, flags and targets."""
-import time
 import datetime
 import logging
 import motor.motor_asyncio
@@ -51,7 +50,8 @@ class CtfDb():
         await self.flags.create_index([('state', pymongo.ASCENDING)])
 
     async def insert_new_flag(self, flag):
-        """Insert a new flag if it does not already exist, set status to NEW."""
+        """Insert a new flag if it does not already exist,
+        set status to NEW."""
         try:
             return await self.flags.update(
                 {'flag': flag.flag},
@@ -61,8 +61,8 @@ class CtfDb():
                      'flag': flag.flag,
                      'state': 'NEW',
                      'comment': '',
-                     'timestamp': datetime.datetime.now(),
-                     'submitted': 0}}, upsert=True)
+                     'timestamp': datetime.datetime.utcnow(),
+                     'submitted': datetime.datetime.utcnow()}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
 
@@ -267,7 +267,7 @@ class CtfDb():
             return await self.flags.update(
                     {'flag': flag},
                     {'$set': {'state': 'SUBMITTED',
-                              'submitted': int(time.time())}})
+                              'submitted': datetime.datetime.utcnow()}})
         except Exception as e:
             self.log.exception(e)
 
