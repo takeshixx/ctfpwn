@@ -7,7 +7,7 @@ import bson.json_util
 import subprocess
 
 from ctfpwn.db import CtfDb
-from ctfpwn.shared import Service
+from ctfpwn.shared import Service, load_ctf_config
 from ctfpwn.exploitservice.worker import ExploitWorkerProtocol
 
 dashboard_html = """<html>
@@ -347,6 +347,7 @@ async def database():
 
 def run_api(config=None):
     if config:
+        config = load_ctf_config(config)
         host = config['api_listening_host']
         port = config['api_listening_port']
     else:
