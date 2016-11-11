@@ -49,26 +49,16 @@ class CtfDb():
         await self.flags.create_index([('flag', pymongo.ASCENDING)])
         await self.flags.create_index([('state', pymongo.ASCENDING)])
 
-    async def insert_new_flag(self, flag):
-        """Insert a new flag if it does not already exist,
-        set status to NEW."""
-        try:
-            return await self.flags.update(
-                {'flag': flag.flag},
-                {'$setOnInsert':
-                    {'service': flag.service,
-                     'target': flag.target,
-                     'flag': flag.flag,
-                     'state': 'NEW',
-                     'comment': '',
-                     'timestamp': datetime.datetime.utcnow(),
-                     'submitted': datetime.datetime.utcnow()}}, upsert=True)
-        except Exception as e:
-            self.log.exception(e)
-
     async def select_exploits(self, limit=0):
         try:
             cursor = self.exploits.find(limit=limit)
+            return await cursor.to_list(None)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def select_exploits_by_service(self, service):
+        try:
+            cursor = self.exploits.find({'service': service})
             return await cursor.to_list(None)
         except Exception as e:
             self.log.exception(e)
@@ -132,6 +122,41 @@ class CtfDb():
             return await self.exploits.remove({'service': service_name})
         except Exception as e:
             self.log.exception(e)
+
+    async def insert_run(self, service, exploit, target, started,
+                         finished, state):
+        try:
+            return await self.exploit_runs.insert({
+                'service': service,
+                'exploit': exploit,
+                'target': target,
+                'started': started,
+                'finished': finished,
+                'state': state,
+                'timestamp': datetime.datetime.utcnow()})
+        except Exception as e:
+            self.log.exception(e)
+
+    async def select_recent_runs(self, service, exploit, target, limit=10):
+        try:
+            cursor = self.exploit_runs.find({'service': service,
+                                             'exploit': exploit,
+                                             'target': target},
+                                            limit=limit).sort([('_id', -1)])
+            return await cursor.to_list(None)
+        except Exception as e:
+            self.log.exception(e)
+
+    async def select_latest_success_run(self, service, target):
+        try:
+            cursor = self.exploit_runs.find({'service': service,
+                                             'target': target},
+                                            limit=1).sort([('_id', -1)])
+            return await cursor.to_list(None)
+        except Exception as e:
+            self.log.exception(e)
+
+    # TARGETS
 
     async def select_alive_targets(self):
         try:
@@ -226,17 +251,22 @@ class CtfDb():
         except Exception as e:
             self.log.exception(e)
 
-    async def insert_run(self, service, exploit, target, started,
-                         finished, state):
+    # FLAGS
+
+    async def insert_new_flag(self, flag):
+        """Insert a new flag if it does not already exist,
+        set status to NEW."""
         try:
-            return await self.exploit_runs.insert({
-                'service': service,
-                'exploit': exploit,
-                'target': target,
-                'started': started,
-                'finished': finished,
-                'state': state,
-                'timestamp': datetime.datetime.utcnow()})
+            return await self.flags.update(
+                {'flag': flag.flag},
+                {'$setOnInsert':
+                    {'service': flag.service,
+                     'target': flag.target,
+                     'flag': flag.flag,
+                     'state': 'NEW',
+                     'comment': '',
+                     'timestamp': datetime.datetime.utcnow(),
+                     'submitted': datetime.datetime.utcnow()}}, upsert=True)
         except Exception as e:
             self.log.exception(e)
 
@@ -302,6 +332,8 @@ class CtfDb():
                     {'$set': {'state': 'FAILED'}})
         except Exception as e:
             self.log.exception(e)
+
+    # STATS
 
     async def exploit_stats(self):
         """Print available exploit, just for test purposes."""
