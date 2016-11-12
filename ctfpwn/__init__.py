@@ -19,13 +19,12 @@ class LazyImporter:
         except AttributeError:
             pass
 
-        import importlib
-
         try:
             module = self.__attribs[name]
         except KeyError:
             raise AttributeError(name)
 
+        import importlib
         module = importlib.import_module(module, __name__)
         attrib = getattr(module, name)
         setattr(self, name, attrib)
