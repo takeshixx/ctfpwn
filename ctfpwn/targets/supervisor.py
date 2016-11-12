@@ -33,13 +33,12 @@ class TargetSupervisor(object):
         of the following representations:
 
         192.168.0.1
-        192.168.1-5.3
         192.168.0.0/24
 
         If there are multiple subnetworks, they should be
-        seperated by commas, e.g.:
+        separated by commas, e.g.:
 
-        192.168.1-5.3,192.168.0.0/24,192.168.0.1"""
+        192.168.0.0/24,192.168.0.1"""
         if not networks:
             return list()
         assert isinstance(networks, (str, bytes)), 'Invalid networks type'
@@ -48,11 +47,12 @@ class TargetSupervisor(object):
         networks = networks.split(',')
         target_networks = set()
         for network in networks:
-            try:
-                _targets = ipaddress.ip_network(network, strict=False)
-            except ValueError:
-                self.log.debug('Invalid network definition: %s', network)
-                continue
+            # TODO: won't work for network definitions like 10.60.1-255.2
+            # try:
+            #     _targets = ipaddress.ip_network(network, strict=False)
+            # except ValueError:
+            #     self.log.debug('Invalid network definition: %s', network)
+            #     continue
             target_networks.add(network)
         return list(target_networks)
 
@@ -103,6 +103,7 @@ class TargetSupervisor(object):
         future = self.loop.create_future()
         cmd = ['nmap', '-T5', '-sn', '-v', '-oX', '-', '-PS',
                ','.join([str(x) for x in self.discover_ports]),
+               '--exclude', self.exclude_targets,
                *self.target_networks]
         transport, protocol = await self.loop.subprocess_exec(
             lambda: TransportWorkerProtocol(future),
