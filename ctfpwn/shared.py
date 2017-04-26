@@ -1,9 +1,10 @@
+# encoding: utf8
 import time
-import yaml
 import pathlib
 import logging
-import logging.config
 from helperlib.logging import default_config
+
+from .config import ReloadableConfig
 
 log = logging.getLogger(__name__)
 
@@ -54,18 +55,7 @@ def load_ctf_config(path, logging_section=None):
         default_config(level=logging.DEBUG, disable_existing_loggers=False)
         logging_section = 'default'
 
-    try:
-        with path.open() as fp:
-            conf = yaml.load(fp)
-    except yaml.YAMLError as e:
-        log.exception('Error during config load')
-    else:
-        if 'logging' in conf and logging_section in conf['logging']:
-            logging.config.dictConfig(conf['logging'][logging_section])
-            log.info('Logging configured from %s', logging_section)
-        else:
-            log.warning('Logging default used')
-        return conf
+    return ReloadableConfig(path, logging_section)
 
 
 class TooMuchConnectionsException(Exception):
