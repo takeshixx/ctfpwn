@@ -5,6 +5,7 @@ Description=CTF-PWN API
 Restart=always
 User=ubuntu
 ExecStart=/srv/ctf/env/bin/python /srv/ctf/ctf-pwn/run-api.py
+WorkingDirectory=/srv/ctf/
 
 [Install]
 WantedBy=default.target

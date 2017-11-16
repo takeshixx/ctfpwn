@@ -114,7 +114,7 @@ logging:
             <<: *DEFAULT_LOGGING_HANDLERS
             file:
                 <<: *DEFAULT_LOGGING_HANDLERS_FILE
-                filename: exploitservice.log
+                filename: logs/exploitservice.log
         formatters:
             <<: *DEFAULT_LOGGING_FORMATTERS
             color:
@@ -133,7 +133,7 @@ logging:
             <<: *DEFAULT_LOGGING_HANDLERS
             file:
                 <<: *DEFAULT_LOGGING_HANDLERS_FILE
-                filename: flagservice.log
+                filename: logs/flagservice.log
         formatters:
             <<: *DEFAULT_LOGGING_FORMATTERS
             color:
@@ -152,7 +152,7 @@ logging:
             <<: *DEFAULT_LOGGING_HANDLERS
             file:
                 <<: *DEFAULT_LOGGING_HANDLERS_FILE
-                filename: targetservice.log
+                filename: logs/targetservice.log
         formatters:
             <<: *DEFAULT_LOGGING_FORMATTERS
             color:

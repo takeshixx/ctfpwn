@@ -5,3 +5,4 @@ aiohttp
 PyYAML
 requests
 jinja2
+six

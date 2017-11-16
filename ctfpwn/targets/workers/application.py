@@ -1,6 +1,5 @@
 import asyncio
 import aiohttp
-import aiohttp.errors
 import random
 
 from helperlib.logging import scope_logger
@@ -62,5 +61,5 @@ class HttpWorker(object):
                     status = str(resp.status)
             if not status.startswith('4') and not status.startswith('5'):
                 self.alive_services.append(service.get('id'))
-        except (ConnectionRefusedError, aiohttp.errors.ClientOSError):
+        except (ConnectionRefusedError, aiohttp.ClientOSError):
             pass
